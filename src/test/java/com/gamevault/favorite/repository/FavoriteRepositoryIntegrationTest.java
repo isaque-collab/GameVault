@@ -47,4 +47,30 @@ class FavoriteRepositoryIntegrationTest {
                 () -> assertEquals(3498L, favoritoEncontrado.getRawgGameId())
         );
     }
+
+    @Test
+    void deveImpedirFavoritoDuplicadoParaMesmoUsuarioEJogo() {
+        User usuario = new User();
+        usuario.setName("Usuario Duplicado");
+        usuario.setUsername("usuario_duplicado");
+        usuario.setEmail("usuario.duplicado@gamevault.test");
+        usuario.setPassword("test-password-hash");
+
+        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+
+        Favorite primeiroFavorito = new Favorite();
+        primeiroFavorito.setUser(usuarioSalvo);
+        primeiroFavorito.setRawgGameId(3498L);
+
+        favoriteRepository.saveAndFlush(primeiroFavorito);
+
+        Favorite favoritoDuplicado = new Favorite();
+        favoritoDuplicado.setUser(usuarioSalvo);
+        favoritoDuplicado.setRawgGameId(3498L);
+
+        assertThrows(
+                org.springframework.dao.DataIntegrityViolationException.class,
+                () -> favoriteRepository.saveAndFlush(favoritoDuplicado)
+        );
+    }
 }
