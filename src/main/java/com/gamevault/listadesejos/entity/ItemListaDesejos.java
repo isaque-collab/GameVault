@@ -1,28 +1,30 @@
-package com.gamevault.favorite.entity;
+package com.gamevault.listadesejos.entity;
 
-import com.gamevault.user.entity.User;
+
+import com.gamevault.user.entity.Usuario;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "favorites",
+        name = "wishlist",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_favorites_user_game",
+                        name = "uk_wishlist_user_game",
                         columnNames = {"user_id", "rawg_game_id"}
                 )
         }
 )
-public class Favorite {
+public class ItemListaDesejos {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY,  optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Usuario usuario;
 
     @Column(name = "rawg_game_id", nullable = false)
     private Long rawgGameId;
@@ -35,7 +37,7 @@ public class Favorite {
     )
     private LocalDateTime createdAt;
 
-    public Favorite() {
+    public ItemListaDesejos() {
 
     }
 
@@ -43,12 +45,12 @@ public class Favorite {
         return id;
     }
 
-    public User getUser() {
-        return user;
+    public Usuario getUser() {
+        return usuario;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(Usuario usuario) {
+        this.usuario = usuario;
     }
 
     public Long getRawgGameId() {

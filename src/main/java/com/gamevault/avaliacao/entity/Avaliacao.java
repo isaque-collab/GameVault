@@ -1,7 +1,7 @@
-package com.gamevault.review.entity;
+package com.gamevault.avaliacao.entity;
 
 
-import com.gamevault.user.entity.User;
+import com.gamevault.user.entity.Usuario;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
                 )
         }
 )
-public class Review {
+public class Avaliacao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,7 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Usuario usuario;
 
     @Column(name = "rawg_game_id", nullable = false)
     private Long rawgGameId;
@@ -48,7 +48,7 @@ public class Review {
     )
     private LocalDateTime updatedAt;
 
-    public Review() {
+    public Avaliacao() {
 
     }
 
@@ -56,12 +56,12 @@ public class Review {
         return id;
     }
 
-    public User getUser() {
-        return user;
+    public Usuario getUser() {
+        return usuario;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(Usuario usuario) {
+        this.usuario = usuario;
     }
 
     public Long getRawgGameId() {

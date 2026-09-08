@@ -1,8 +1,8 @@
-package com.gamevault.review.repository;
+package com.gamevault.avaliacao.repository;
 
-import com.gamevault.review.entity.Review;
-import com.gamevault.user.entity.User;
-import com.gamevault.user.repository.UserRepository;
+import com.gamevault.avaliacao.entity.Avaliacao;
+import com.gamevault.user.entity.Usuario;
+import com.gamevault.user.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,34 +13,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class ReviewRepositoryIntegrationTest {
+class AvaliacaoRepositoryIntegrationTest {
 
     @Autowired
-    private ReviewRepository reviewRepository;
+    private AvaliacaoRepository avaliacaoRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Test
     void deveSalvarAvaliacaoAssociadaAoUsuario() {
-        User usuario = criarUsuario(
+        Usuario usuario = criarUsuario(
                 "Usuario Avaliacao",
                 "usuario_avaliacao",
                 "usuario.avaliacao@gamevault.test"
         );
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Review avaliacao = new Review();
+        Avaliacao avaliacao = new Avaliacao();
         avaliacao.setUser(usuarioSalvo);
         avaliacao.setRawgGameId(3498L);
         avaliacao.setRating((byte) 5);
 
-        Review avaliacaoSalva = reviewRepository.saveAndFlush(avaliacao);
+        Avaliacao avaliacaoSalva = avaliacaoRepository.saveAndFlush(avaliacao);
 
         assertNotNull(avaliacaoSalva.getId());
 
-        Review avaliacaoEncontrada = reviewRepository
+        Avaliacao avaliacaoEncontrada = avaliacaoRepository
                 .findById(avaliacaoSalva.getId())
                 .orElseThrow();
 
@@ -62,80 +62,80 @@ class ReviewRepositoryIntegrationTest {
 
     @Test
     void deveImpedirAvaliacaoDuplicadaParaMesmoUsuarioEJogo() {
-        User usuario = criarUsuario(
+        Usuario usuario = criarUsuario(
                 "Usuario Avaliacao Duplicada",
                 "usuario_avaliacao_duplicada",
                 "usuario.avaliacao.duplicada@gamevault.test"
         );
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Review primeiraAvaliacao = new Review();
+        Avaliacao primeiraAvaliacao = new Avaliacao();
         primeiraAvaliacao.setUser(usuarioSalvo);
         primeiraAvaliacao.setRawgGameId(3498L);
         primeiraAvaliacao.setRating((byte) 4);
 
-        reviewRepository.saveAndFlush(primeiraAvaliacao);
+        avaliacaoRepository.saveAndFlush(primeiraAvaliacao);
 
-        Review avaliacaoDuplicada = new Review();
+        Avaliacao avaliacaoDuplicada = new Avaliacao();
         avaliacaoDuplicada.setUser(usuarioSalvo);
         avaliacaoDuplicada.setRawgGameId(3498L);
         avaliacaoDuplicada.setRating((byte) 5);
 
         assertThrows(
                 DataIntegrityViolationException.class,
-                () -> reviewRepository.saveAndFlush(avaliacaoDuplicada)
+                () -> avaliacaoRepository.saveAndFlush(avaliacaoDuplicada)
         );
     }
 
     @Test
     void deveRejeitarNotaAbaixoDoMinimoPermitido() {
-        User usuario = criarUsuario(
+        Usuario usuario = criarUsuario(
                 "Usuario Nota Baixa",
                 "usuario_nota_baixa",
                 "usuario.nota.baixa@gamevault.test"
         );
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Review avaliacao = new Review();
+        Avaliacao avaliacao = new Avaliacao();
         avaliacao.setUser(usuarioSalvo);
         avaliacao.setRawgGameId(4200L);
         avaliacao.setRating((byte) 0);
 
         assertThrows(
                 DataIntegrityViolationException.class,
-                () -> reviewRepository.saveAndFlush(avaliacao)
+                () -> avaliacaoRepository.saveAndFlush(avaliacao)
         );
     }
 
     @Test
     void deveRejeitarNotaAcimaDoMaximoPermitido() {
-        User usuario = criarUsuario(
+        Usuario usuario = criarUsuario(
                 "Usuario Nota Alta",
                 "usuario_nota_alta",
                 "usuario.nota.alta@gamevault.test"
         );
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Review avaliacao = new Review();
+        Avaliacao avaliacao = new Avaliacao();
         avaliacao.setUser(usuarioSalvo);
         avaliacao.setRawgGameId(4200L);
         avaliacao.setRating((byte) 6);
 
         assertThrows(
                 DataIntegrityViolationException.class,
-                () -> reviewRepository.saveAndFlush(avaliacao)
+                () -> avaliacaoRepository.saveAndFlush(avaliacao)
         );
     }
 
-    private User criarUsuario(
+    private Usuario criarUsuario(
             String nome,
             String username,
             String email
     ) {
-        User usuario = new User();
+        Usuario usuario = new Usuario();
         usuario.setName(nome);
         usuario.setUsername(username);
         usuario.setEmail(email);

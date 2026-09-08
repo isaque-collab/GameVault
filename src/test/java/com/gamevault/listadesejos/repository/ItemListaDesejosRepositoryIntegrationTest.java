@@ -1,8 +1,8 @@
-package com.gamevault.wishlist.repository;
+package com.gamevault.listadesejos.repository;
 
-import com.gamevault.user.entity.User;
-import com.gamevault.user.repository.UserRepository;
-import com.gamevault.wishlist.entity.Wishlist;
+import com.gamevault.user.entity.Usuario;
+import com.gamevault.user.repository.UsuarioRepository;
+import com.gamevault.listadesejos.entity.ItemListaDesejos;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,33 +13,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class WishlistRepositoryIntegrationTest {
+class ItemListaDesejosRepositoryIntegrationTest {
 
     @Autowired
-    private WishlistRepository wishlistRepository;
+    private ItemListaDesejosRepository itemListaDesejosRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Test
     void deveSalvarJogoNaWishlistAssociadoAoUsuario() {
-        User usuario = criarUsuario(
+        Usuario usuario = criarUsuario(
                 "Usuario Wishlist",
                 "usuario_wishlist",
                 "usuario.wishlist@gamevault.test"
         );
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Wishlist itemWishlist = new Wishlist();
-        itemWishlist.setUser(usuarioSalvo);
-        itemWishlist.setRawgGameId(4200L);
+        ItemListaDesejos itemItemListaDesejos = new ItemListaDesejos();
+        itemItemListaDesejos.setUser(usuarioSalvo);
+        itemItemListaDesejos.setRawgGameId(4200L);
 
-        Wishlist itemSalvo = wishlistRepository.saveAndFlush(itemWishlist);
+        ItemListaDesejos itemSalvo = itemListaDesejosRepository.saveAndFlush(itemItemListaDesejos);
 
         assertNotNull(itemSalvo.getId());
 
-        Wishlist itemEncontrado = wishlistRepository
+        ItemListaDesejos itemEncontrado = itemListaDesejosRepository
                 .findById(itemSalvo.getId())
                 .orElseThrow();
 
@@ -57,36 +57,36 @@ class WishlistRepositoryIntegrationTest {
 
     @Test
     void deveImpedirWishlistDuplicadaParaMesmoUsuarioEJogo() {
-        User usuario = criarUsuario(
+        Usuario usuario = criarUsuario(
                 "Usuario Wishlist Duplicada",
                 "usuario_wishlist_duplicada",
                 "usuario.wishlist.duplicada@gamevault.test"
         );
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Wishlist primeiroItem = new Wishlist();
+        ItemListaDesejos primeiroItem = new ItemListaDesejos();
         primeiroItem.setUser(usuarioSalvo);
         primeiroItem.setRawgGameId(4200L);
 
-        wishlistRepository.saveAndFlush(primeiroItem);
+        itemListaDesejosRepository.saveAndFlush(primeiroItem);
 
-        Wishlist itemDuplicado = new Wishlist();
+        ItemListaDesejos itemDuplicado = new ItemListaDesejos();
         itemDuplicado.setUser(usuarioSalvo);
         itemDuplicado.setRawgGameId(4200L);
 
         assertThrows(
                 DataIntegrityViolationException.class,
-                () -> wishlistRepository.saveAndFlush(itemDuplicado)
+                () -> itemListaDesejosRepository.saveAndFlush(itemDuplicado)
         );
     }
 
-    private User criarUsuario(
+    private Usuario criarUsuario(
             String nome,
             String username,
             String email
     ) {
-        User usuario = new User();
+        Usuario usuario = new Usuario();
         usuario.setName(nome);
         usuario.setUsername(username);
         usuario.setEmail(email);

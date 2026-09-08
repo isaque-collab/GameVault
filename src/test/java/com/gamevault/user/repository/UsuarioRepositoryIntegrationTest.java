@@ -1,7 +1,7 @@
 package com.gamevault.user.repository;
 
 
-import com.gamevault.user.entity.User;
+import com.gamevault.user.entity.Usuario;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,24 +11,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class UserRepositoryIntegrationTest {
+class UsuarioRepositoryIntegrationTest {
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Test
     void deveSalvarEBuscarUsuarioPorId(){
-        User usuario = new User();
+        Usuario usuario = new Usuario();
         usuario.setName("Usuario Teste");
         usuario.setUsername("usuario_teste");
         usuario.setEmail("usuario.teste@gamevault.test");
         usuario.setPassword("test-password-hash");
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         assertNotNull(usuarioSalvo.getId());
 
-        User usuarioEncontrado = userRepository.findById(usuarioSalvo.getId()).orElseThrow();
+        Usuario usuarioEncontrado = usuarioRepository.findById(usuarioSalvo.getId()).orElseThrow();
 
         assertAll(
                 () -> assertEquals("Usuario Teste", usuarioEncontrado.getName()),

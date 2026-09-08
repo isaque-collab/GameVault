@@ -1,8 +1,8 @@
-package com.gamevault.favorite.repository;
+package com.gamevault.favorito.repository;
 
-import com.gamevault.favorite.entity.Favorite;
-import com.gamevault.user.entity.User;
-import com.gamevault.user.repository.UserRepository;
+import com.gamevault.favorito.entity.Favorito;
+import com.gamevault.user.entity.Usuario;
+import com.gamevault.user.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,33 +12,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class FavoriteRepositoryIntegrationTest {
+class FavoritoRepositoryIntegrationTest {
 
     @Autowired
-    private FavoriteRepository favoriteRepository;
+    private FavoritoRepository favoritoRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Test
     void deveSalvarFavoritoAssociadoAoUsuario() {
-        User usuario = new User();
+        Usuario usuario = new Usuario();
         usuario.setName("Usuario Favorito");
         usuario.setUsername("usuario_favorito");
         usuario.setEmail("usuario.favorito@gamevault.test");
         usuario.setPassword("test-password-hash");
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Favorite favorito = new Favorite();
+        Favorito favorito = new Favorito();
         favorito.setUser(usuarioSalvo);
         favorito.setRawgGameId(3498L);
 
-        Favorite favoritoSalvo = favoriteRepository.saveAndFlush(favorito);
+        Favorito favoritoSalvo = favoritoRepository.saveAndFlush(favorito);
 
         assertNotNull(favoritoSalvo.getId());
 
-        Favorite favoritoEncontrado = favoriteRepository
+        Favorito favoritoEncontrado = favoritoRepository
                 .findById(favoritoSalvo.getId())
                 .orElseThrow();
 
@@ -50,27 +50,27 @@ class FavoriteRepositoryIntegrationTest {
 
     @Test
     void deveImpedirFavoritoDuplicadoParaMesmoUsuarioEJogo() {
-        User usuario = new User();
+        Usuario usuario = new Usuario();
         usuario.setName("Usuario Duplicado");
         usuario.setUsername("usuario_duplicado");
         usuario.setEmail("usuario.duplicado@gamevault.test");
         usuario.setPassword("test-password-hash");
 
-        User usuarioSalvo = userRepository.saveAndFlush(usuario);
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
-        Favorite primeiroFavorito = new Favorite();
+        Favorito primeiroFavorito = new Favorito();
         primeiroFavorito.setUser(usuarioSalvo);
         primeiroFavorito.setRawgGameId(3498L);
 
-        favoriteRepository.saveAndFlush(primeiroFavorito);
+        favoritoRepository.saveAndFlush(primeiroFavorito);
 
-        Favorite favoritoDuplicado = new Favorite();
+        Favorito favoritoDuplicado = new Favorito();
         favoritoDuplicado.setUser(usuarioSalvo);
         favoritoDuplicado.setRawgGameId(3498L);
 
         assertThrows(
                 org.springframework.dao.DataIntegrityViolationException.class,
-                () -> favoriteRepository.saveAndFlush(favoritoDuplicado)
+                () -> favoritoRepository.saveAndFlush(favoritoDuplicado)
         );
     }
 }
