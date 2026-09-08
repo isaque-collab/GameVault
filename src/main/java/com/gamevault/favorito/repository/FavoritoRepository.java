@@ -8,9 +8,9 @@ import java.util.Optional;
 
 public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
 
-    boolean existsByUserIdAndRawgGameId(Long userId, Long rawgGameId);
+    boolean existsByUsuarioIdAndRawgGameId(Long userId, Long rawgGameId);
 
-    Optional<Favorito> findByUserIdAndRawgGameId(Long userId, Long rawgGameId);
+    Optional<Favorito> findByUsuarioIdAndRawgGameId(Long userId, Long rawgGameId);
 
-    List<Favorito> findAllByUserId(Long userId);
+    List<Favorito> findAllByUsuarioId(Long userId);
 }

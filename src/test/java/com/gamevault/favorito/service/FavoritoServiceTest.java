@@ -48,7 +48,7 @@ class FavoritoServiceTest {
         Usuario usuario = new Usuario();
 
         when(
-                favoritoRepository.existsByUserIdAndRawgGameId(
+                favoritoRepository.existsByUsuarioIdAndRawgGameId(
                         userId,
                         rawgGameId
                 )
@@ -60,13 +60,13 @@ class FavoritoServiceTest {
         when(favoritoRepository.save(any(Favorito.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Favorito favorito = favoritoService.addFavorite(
+        Favorito favorito = favoritoService.adicionarFavorito(
                 userId,
                 rawgGameId
         );
 
         assertAll(
-                () -> assertSame(usuario, favorito.getUser()),
+                () -> assertSame(usuario, favorito.getUseario()),
                 () -> assertEquals(rawgGameId, favorito.getRawgGameId())
         );
 
@@ -79,7 +79,7 @@ class FavoritoServiceTest {
         Long rawgGameId = 3498L;
 
         when(
-                favoritoRepository.existsByUserIdAndRawgGameId(
+                favoritoRepository.existsByUsuarioIdAndRawgGameId(
                         userId,
                         rawgGameId
                 )
@@ -87,7 +87,7 @@ class FavoritoServiceTest {
 
         assertThrows(
                 FavoritoJaExisteException.class,
-                () -> favoritoService.addFavorite(userId, rawgGameId)
+                () -> favoritoService.adicionarFavorito(userId, rawgGameId)
         );
 
         verifyNoInteractions(usuarioRepository);
@@ -100,7 +100,7 @@ class FavoritoServiceTest {
         Long rawgGameId = 3498L;
 
         when(
-                favoritoRepository.existsByUserIdAndRawgGameId(
+                favoritoRepository.existsByUsuarioIdAndRawgGameId(
                         userId,
                         rawgGameId
                 )
@@ -111,7 +111,7 @@ class FavoritoServiceTest {
 
         assertThrows(
                 UsuarioNaoEncontradoException.class,
-                () -> favoritoService.addFavorite(userId, rawgGameId)
+                () -> favoritoService.adicionarFavorito(userId, rawgGameId)
         );
 
         verify(favoritoRepository, never()).save(any());
@@ -125,13 +125,13 @@ class FavoritoServiceTest {
         Favorito favorito = new Favorito();
 
         when(
-                favoritoRepository.findByUserIdAndRawgGameId(
+                favoritoRepository.findByUsuarioIdAndRawgGameId(
                         userId,
                         rawgGameId
                 )
         ).thenReturn(Optional.of(favorito));
 
-        favoritoService.removeFavorite(userId, rawgGameId);
+        favoritoService.removeFavorito(userId, rawgGameId);
 
         verify(favoritoRepository).delete(favorito);
     }
@@ -142,7 +142,7 @@ class FavoritoServiceTest {
         Long rawgGameId = 3498L;
 
         when(
-                favoritoRepository.findByUserIdAndRawgGameId(
+                favoritoRepository.findByUsuarioIdAndRawgGameId(
                         userId,
                         rawgGameId
                 )
@@ -150,7 +150,7 @@ class FavoritoServiceTest {
 
         assertThrows(
                 FavoritoNaoEncontradoException.class,
-                () -> favoritoService.removeFavorite(userId, rawgGameId)
+                () -> favoritoService.removeFavorito(userId, rawgGameId)
         );
 
         verify(favoritoRepository, never()).delete(any());
@@ -166,7 +166,7 @@ class FavoritoServiceTest {
         Favorito segundoFavorito = new Favorito();
         segundoFavorito.setRawgGameId(3328L);
 
-        when(favoritoRepository.findAllByUserId(userId))
+        when(favoritoRepository.findAllByUsuarioId(userId))
                 .thenReturn(List.of(primeiroFavorito, segundoFavorito));
 
         List<Favorito> favoritos = favoritoService.listFavorites(userId);

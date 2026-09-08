@@ -43,11 +43,11 @@ public class Favorito {
         return id;
     }
 
-    public Usuario getUser() {
+    public Usuario getUseario() {
         return usuario;
     }
 
-    public void setUser(Usuario usuario) {
+    public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }
 

@@ -28,9 +28,9 @@ public class FavoritoService {
     }
 
     @Transactional
-    public Favorito addFavorite(Long userId, Long rawgGameId) {
+    public Favorito adicionarFavorito(Long userId, Long rawgGameId) {
 
-        if (favoritoRepository.existsByUserIdAndRawgGameId(userId, rawgGameId)){
+        if (favoritoRepository.existsByUsuarioIdAndRawgGameId(userId, rawgGameId)){
             throw new FavoritoJaExisteException(userId, rawgGameId);
         }
 
@@ -38,17 +38,17 @@ public class FavoritoService {
                 .orElseThrow(() -> new UsuarioNaoEncontradoException(userId));
 
         Favorito favorito = new Favorito();
-        favorito.setUser(usuario);
+        favorito.setUsuario(usuario);
         favorito.setRawgGameId(rawgGameId);
 
         return favoritoRepository.save(favorito);
     }
 
     @Transactional
-    public void removeFavorite(Long userId, Long rawgGameId) {
+    public void removeFavorito(Long userId, Long rawgGameId) {
 
         Favorito favorito = favoritoRepository
-                .findByUserIdAndRawgGameId(userId, rawgGameId)
+                .findByUsuarioIdAndRawgGameId(userId, rawgGameId)
                 .orElseThrow(
                         () -> new FavoritoNaoEncontradoException(userId, rawgGameId)
                 );
@@ -57,6 +57,6 @@ public class FavoritoService {
     }
 
     public List<Favorito> listFavorites(Long userId) {
-        return favoritoRepository.findAllByUserId(userId);
+        return favoritoRepository.findAllByUsuarioId(userId);
     }
 }

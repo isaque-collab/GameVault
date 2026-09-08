@@ -31,7 +31,7 @@ class FavoritoRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         Favorito favorito = new Favorito();
-        favorito.setUser(usuarioSalvo);
+        favorito.setUsuario(usuarioSalvo);
         favorito.setRawgGameId(3498L);
 
         Favorito favoritoSalvo = favoritoRepository.saveAndFlush(favorito);
@@ -43,7 +43,7 @@ class FavoritoRepositoryIntegrationTest {
                 .orElseThrow();
 
         assertAll(
-                () -> assertEquals(usuarioSalvo.getId(), favoritoEncontrado.getUser().getId()),
+                () -> assertEquals(usuarioSalvo.getId(), favoritoEncontrado.getUseario().getId()),
                 () -> assertEquals(3498L, favoritoEncontrado.getRawgGameId())
         );
     }
@@ -59,13 +59,13 @@ class FavoritoRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         Favorito primeiroFavorito = new Favorito();
-        primeiroFavorito.setUser(usuarioSalvo);
+        primeiroFavorito.setUsuario(usuarioSalvo);
         primeiroFavorito.setRawgGameId(3498L);
 
         favoritoRepository.saveAndFlush(primeiroFavorito);
 
         Favorito favoritoDuplicado = new Favorito();
-        favoritoDuplicado.setUser(usuarioSalvo);
+        favoritoDuplicado.setUsuario(usuarioSalvo);
         favoritoDuplicado.setRawgGameId(3498L);
 
         assertThrows(
