@@ -43,7 +43,7 @@ class FavoritoRepositoryIntegrationTest {
                 .orElseThrow();
 
         assertAll(
-                () -> assertEquals(usuarioSalvo.getId(), favoritoEncontrado.getUseario().getId()),
+                () -> assertEquals(usuarioSalvo.getId(), favoritoEncontrado.getUsuario().getId()),
                 () -> assertEquals(3498L, favoritoEncontrado.getRawgGameId())
         );
     }

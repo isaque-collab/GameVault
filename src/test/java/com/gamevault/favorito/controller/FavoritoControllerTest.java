@@ -70,7 +70,7 @@ class FavoritoControllerTest {
         when(favorito.getId()).thenReturn(1L);
         when(favorito.getRawgGameId()).thenReturn(3498L);
 
-        when(favoritoService.listFavorites(1L))
+        when(favoritoService.listarFavoritos(1L))
                 .thenReturn(List.of(favorito));
 
         mockMvc.perform(
@@ -92,7 +92,7 @@ class FavoritoControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(favoritoService)
-                .removeFavorito(1L, 3498L);
+                .removerFavorito(1L, 3498L);
     }
 
     @Test
@@ -129,7 +129,7 @@ class FavoritoControllerTest {
         doThrow(
                 new FavoritoNaoEncontradoException(1L, 3498L)
         ).when(favoritoService)
-                .removeFavorito(1L, 3498L);
+                .removerFavorito(1L, 3498L);
 
         mockMvc.perform(
                         delete("/api/usuarios/1/favoritos/3498")

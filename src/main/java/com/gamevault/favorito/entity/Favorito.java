@@ -43,7 +43,7 @@ public class Favorito {
         return id;
     }
 
-    public Usuario getUseario() {
+    public Usuario getUsuario() {
         return usuario;
     }
 

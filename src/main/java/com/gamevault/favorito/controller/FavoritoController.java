@@ -43,7 +43,7 @@ public class FavoritoController {
     ){
 
         List<FavoritoResposta> favoritos = favoritoService
-                .listFavorites(usuarioId)
+                .listarFavoritos(usuarioId)
                 .stream()
                 .map(FavoritoResposta::de)
                 .toList();
@@ -57,7 +57,7 @@ public class FavoritoController {
             @PathVariable Long rawgGameId
     ){
 
-        favoritoService.removeFavorito(usuarioId, rawgGameId);
+        favoritoService.removerFavorito(usuarioId, rawgGameId);
 
         return ResponseEntity.noContent().build();
     }

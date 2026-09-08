@@ -45,7 +45,7 @@ public class FavoritoService {
     }
 
     @Transactional
-    public void removeFavorito(Long userId, Long rawgGameId) {
+    public void removerFavorito(Long userId, Long rawgGameId) {
 
         Favorito favorito = favoritoRepository
                 .findByUsuarioIdAndRawgGameId(userId, rawgGameId)
@@ -56,7 +56,7 @@ public class FavoritoService {
         favoritoRepository.delete(favorito);
     }
 
-    public List<Favorito> listFavorites(Long userId) {
+    public List<Favorito> listarFavoritos(Long userId) {
         return favoritoRepository.findAllByUsuarioId(userId);
     }
 }

@@ -66,7 +66,7 @@ class FavoritoServiceTest {
         );
 
         assertAll(
-                () -> assertSame(usuario, favorito.getUseario()),
+                () -> assertSame(usuario, favorito.getUsuario()),
                 () -> assertEquals(rawgGameId, favorito.getRawgGameId())
         );
 
@@ -131,7 +131,7 @@ class FavoritoServiceTest {
                 )
         ).thenReturn(Optional.of(favorito));
 
-        favoritoService.removeFavorito(userId, rawgGameId);
+        favoritoService.removerFavorito(userId, rawgGameId);
 
         verify(favoritoRepository).delete(favorito);
     }
@@ -150,7 +150,7 @@ class FavoritoServiceTest {
 
         assertThrows(
                 FavoritoNaoEncontradoException.class,
-                () -> favoritoService.removeFavorito(userId, rawgGameId)
+                () -> favoritoService.removerFavorito(userId, rawgGameId)
         );
 
         verify(favoritoRepository, never()).delete(any());
@@ -169,7 +169,7 @@ class FavoritoServiceTest {
         when(favoritoRepository.findAllByUsuarioId(userId))
                 .thenReturn(List.of(primeiroFavorito, segundoFavorito));
 
-        List<Favorito> favoritos = favoritoService.listFavorites(userId);
+        List<Favorito> favoritos = favoritoService.listarFavoritos(userId);
 
         assertAll(
                 () -> assertEquals(2, favoritos.size()),
