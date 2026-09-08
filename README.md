@@ -50,9 +50,9 @@ O projeto segue uma arquitetura de **monólito modular por funcionalidade**.
 ```text
 com.gamevault
 ├── auth
-├── user
+├── usuario
 ├── game
-├── favorite
+├── favorito
 ├── wishlist
 ├── review
 └── shared
@@ -230,10 +230,10 @@ Os testes utilizam transações para que os dados criados durante a execução s
 - Flyway.
 - Migration inicial.
 - Entidades JPA:
-  - `User`
-  - `Favorite`
-  - `Wishlist`
-  - `Review`
+  - `Usuario`
+  - `Favorito`
+  - `listadesejos`
+  - `Avaliacao`
 - Repositories Spring Data JPA.
 - Testes de integração da camada de persistência.
 - Validação do build com Maven.
