@@ -130,6 +130,125 @@ class AvaliacaoRepositoryIntegrationTest {
         );
     }
 
+    @Test
+    void deveBuscarAvaliacaoPorUsuarioEJogo(){
+        Usuario usuario = criarUsuario(
+                "Usuario Busca Avaliacao",
+                "usuario_busca_avaliacao",
+                "usuario.busca.avaliacao@gamevault.test"
+        );
+
+        Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
+
+        Avaliacao avaliacao = new Avaliacao();
+        avaliacao.setUsuario(usuarioSalvo);
+        avaliacao.setRawgGameId(3498L);
+        avaliacao.setRating((byte) 4);
+
+        avaliacaoRepository.saveAndFlush(avaliacao);
+
+        Avaliacao avaliacaoEncontrada = avaliacaoRepository
+                .findByUsuarioIdAndRawgGameId(
+                        usuarioSalvo.getId(),
+                        3498L
+                )
+                .orElseThrow();
+
+        assertAll(
+                () -> assertEquals(
+                        usuarioSalvo.getId(),
+                        avaliacaoEncontrada.getUsuario().getId()
+                ),
+                () -> assertEquals(
+                        3498L,
+                        avaliacaoEncontrada.getRawgGameId()
+                ),
+                () -> assertEquals(
+                        (byte) 4,
+                        avaliacaoEncontrada.getRating()
+                )
+        );
+    }
+
+    @Test
+    void deveContarAvaliacoesDoJogo() {
+        Usuario primeiroUsuario = criarUsuario(
+                "Primeiro Usuario Media",
+                "primeiro_usuario_media",
+                "primeiro.usuario.media@gamevault.test"
+        );
+
+        Usuario segundoUsuario = criarUsuario(
+                "Segundo Usuario Media",
+                "segundo_usuario_media",
+                "segundo.usuario.media@gamevault.test"
+        );
+
+        usuarioRepository.saveAndFlush(primeiroUsuario);
+        usuarioRepository.saveAndFlush(segundoUsuario);
+
+        Avaliacao primeiraAvaliacao = new Avaliacao();
+        primeiraAvaliacao.setUsuario(primeiroUsuario);
+        primeiraAvaliacao.setRawgGameId(3498L);
+        primeiraAvaliacao.setRating((byte) 4);
+
+        Avaliacao segundaAvaliacao = new Avaliacao();
+        segundaAvaliacao.setUsuario(segundoUsuario);
+        segundaAvaliacao.setRawgGameId(3498L);
+        segundaAvaliacao.setRating((byte) 5);
+
+        avaliacaoRepository.saveAndFlush(primeiraAvaliacao);
+        avaliacaoRepository.saveAndFlush(segundaAvaliacao);
+
+        long quantidade = avaliacaoRepository.countByRawgGameId(3498L);
+
+        assertEquals(2L, quantidade);
+    }
+
+    @Test
+    void deveCalcularMediaDasAvaliacoesDoJogo() {
+        Usuario primeiroUsuario = criarUsuario(
+                "Primeiro Usuario Calculo",
+                "primeiro_usuario_calculo",
+                "primeiro.usuario.calculo@gamevault.test"
+        );
+
+        Usuario segundoUsuario = criarUsuario(
+                "Segundo Usuario Calculo",
+                "segundo_usuario_calculo",
+                "segundo.usuario.calculo@gamevault.test"
+        );
+
+        usuarioRepository.saveAndFlush(primeiroUsuario);
+        usuarioRepository.saveAndFlush(segundoUsuario);
+
+        Avaliacao primeiraAvaliacao = new Avaliacao();
+        primeiraAvaliacao.setUsuario(primeiroUsuario);
+        primeiraAvaliacao.setRawgGameId(4200L);
+        primeiraAvaliacao.setRating((byte) 4);
+
+        Avaliacao segundaAvaliacao = new Avaliacao();
+        segundaAvaliacao.setUsuario(segundoUsuario);
+        segundaAvaliacao.setRawgGameId(4200L);
+        segundaAvaliacao.setRating((byte) 2);
+
+        avaliacaoRepository.saveAndFlush(primeiraAvaliacao);
+        avaliacaoRepository.saveAndFlush(segundaAvaliacao);
+
+        Double media = avaliacaoRepository
+                .calcularMediaPorJogo(4200L)
+                .orElseThrow();
+
+        assertEquals(3.0, media);
+    }
+
+    @Test
+    void deveRetornarMediaVaziaQuandoJogoNaoPossuirAvaliacoes() {
+        var media = avaliacaoRepository.calcularMediaPorJogo(999999L);
+
+        assertTrue(media.isEmpty());
+    }
+
     private Usuario criarUsuario(
             String nome,
             String username,
