@@ -32,7 +32,7 @@ class AvaliacaoRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         Avaliacao avaliacao = new Avaliacao();
-        avaliacao.setUser(usuarioSalvo);
+        avaliacao.setUsuario(usuarioSalvo);
         avaliacao.setRawgGameId(3498L);
         avaliacao.setRating((byte) 5);
 
@@ -47,7 +47,7 @@ class AvaliacaoRepositoryIntegrationTest {
         assertAll(
                 () -> assertEquals(
                         usuarioSalvo.getId(),
-                        avaliacaoEncontrada.getUser().getId()
+                        avaliacaoEncontrada.getUsuario().getId()
                 ),
                 () -> assertEquals(
                         3498L,
@@ -71,14 +71,14 @@ class AvaliacaoRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         Avaliacao primeiraAvaliacao = new Avaliacao();
-        primeiraAvaliacao.setUser(usuarioSalvo);
+        primeiraAvaliacao.setUsuario(usuarioSalvo);
         primeiraAvaliacao.setRawgGameId(3498L);
         primeiraAvaliacao.setRating((byte) 4);
 
         avaliacaoRepository.saveAndFlush(primeiraAvaliacao);
 
         Avaliacao avaliacaoDuplicada = new Avaliacao();
-        avaliacaoDuplicada.setUser(usuarioSalvo);
+        avaliacaoDuplicada.setUsuario(usuarioSalvo);
         avaliacaoDuplicada.setRawgGameId(3498L);
         avaliacaoDuplicada.setRating((byte) 5);
 
@@ -99,7 +99,7 @@ class AvaliacaoRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         Avaliacao avaliacao = new Avaliacao();
-        avaliacao.setUser(usuarioSalvo);
+        avaliacao.setUsuario(usuarioSalvo);
         avaliacao.setRawgGameId(4200L);
         avaliacao.setRating((byte) 0);
 
@@ -120,7 +120,7 @@ class AvaliacaoRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         Avaliacao avaliacao = new Avaliacao();
-        avaliacao.setUser(usuarioSalvo);
+        avaliacao.setUsuario(usuarioSalvo);
         avaliacao.setRawgGameId(4200L);
         avaliacao.setRating((byte) 6);
 

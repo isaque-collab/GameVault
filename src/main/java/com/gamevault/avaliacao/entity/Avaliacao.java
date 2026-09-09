@@ -56,11 +56,11 @@ public class Avaliacao {
         return id;
     }
 
-    public Usuario getUser() {
+    public Usuario getUsuario() {
         return usuario;
     }
 
-    public void setUser(Usuario usuario) {
+    public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }
 
