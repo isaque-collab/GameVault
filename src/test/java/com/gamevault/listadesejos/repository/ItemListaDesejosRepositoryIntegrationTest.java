@@ -32,7 +32,7 @@ class ItemListaDesejosRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         ItemListaDesejos itemItemListaDesejos = new ItemListaDesejos();
-        itemItemListaDesejos.setUser(usuarioSalvo);
+        itemItemListaDesejos.setUsuario(usuarioSalvo);
         itemItemListaDesejos.setRawgGameId(4200L);
 
         ItemListaDesejos itemSalvo = itemListaDesejosRepository.saveAndFlush(itemItemListaDesejos);
@@ -46,7 +46,7 @@ class ItemListaDesejosRepositoryIntegrationTest {
         assertAll(
                 () -> assertEquals(
                         usuarioSalvo.getId(),
-                        itemEncontrado.getUser().getId()
+                        itemEncontrado.getUsuario().getId()
                 ),
                 () -> assertEquals(
                         4200L,
@@ -66,13 +66,13 @@ class ItemListaDesejosRepositoryIntegrationTest {
         Usuario usuarioSalvo = usuarioRepository.saveAndFlush(usuario);
 
         ItemListaDesejos primeiroItem = new ItemListaDesejos();
-        primeiroItem.setUser(usuarioSalvo);
+        primeiroItem.setUsuario(usuarioSalvo);
         primeiroItem.setRawgGameId(4200L);
 
         itemListaDesejosRepository.saveAndFlush(primeiroItem);
 
         ItemListaDesejos itemDuplicado = new ItemListaDesejos();
-        itemDuplicado.setUser(usuarioSalvo);
+        itemDuplicado.setUsuario(usuarioSalvo);
         itemDuplicado.setRawgGameId(4200L);
 
         assertThrows(
