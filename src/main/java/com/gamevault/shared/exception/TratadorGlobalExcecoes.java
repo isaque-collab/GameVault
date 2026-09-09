@@ -2,6 +2,8 @@ package com.gamevault.shared.exception;
 
 import com.gamevault.favorito.exception.FavoritoJaExisteException;
 import com.gamevault.favorito.exception.FavoritoNaoEncontradoException;
+import com.gamevault.listadesejos.exception.ItemListaDesejosJaExisteException;
+import com.gamevault.listadesejos.exception.ItemListaDesejosNaoEncontradoException;
 import com.gamevault.user.exception.UsuarioNaoEncontradoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -27,6 +29,7 @@ public class TratadorGlobalExcecoes {
 
     @ExceptionHandler({
             FavoritoNaoEncontradoException.class,
+            ItemListaDesejosNaoEncontradoException.class,
             UsuarioNaoEncontradoException.class
     })
     public ProblemDetail tratarRecursoNaoEncontrado(
@@ -39,6 +42,21 @@ public class TratadorGlobalExcecoes {
         );
 
         problema.setTitle("Recurso não encontrado");
+
+        return problema;
+    }
+
+    @ExceptionHandler(ItemListaDesejosJaExisteException.class)
+    public ProblemDetail tratarItemListaDesejosJaExiste(
+            ItemListaDesejosJaExisteException exception
+    ){
+
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+
+        problema.setTitle("Item já existente na lista de desejos");
 
         return problema;
     }
