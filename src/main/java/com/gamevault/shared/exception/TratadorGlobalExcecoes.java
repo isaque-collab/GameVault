@@ -6,7 +6,7 @@ import com.gamevault.favorito.exception.FavoritoJaExisteException;
 import com.gamevault.favorito.exception.FavoritoNaoEncontradoException;
 import com.gamevault.listadesejos.exception.ItemListaDesejosJaExisteException;
 import com.gamevault.listadesejos.exception.ItemListaDesejosNaoEncontradoException;
-import com.gamevault.user.exception.UsuarioNaoEncontradoException;
+import com.gamevault.user.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -74,6 +74,40 @@ public class TratadorGlobalExcecoes {
         );
 
         problema.setTitle("Nota de avaliação inválida");
+
+        return problema;
+    }
+
+    @ExceptionHandler({
+            UsernameJaCadastradoException.class,
+            EmailJaCadastradoException.class
+    })
+    public ProblemDetail tratarDadosUsuarioJaCadastrado(
+            RuntimeException exception
+    ) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+
+        problema.setTitle("Dados de usuário já cadastrados");
+
+        return problema;
+    }
+
+    @ExceptionHandler({
+            SenhaInvalidaException.class,
+            SenhasNaoCoincidemException.class
+    })
+    public ProblemDetail tratarSenhaInvalida(
+            RuntimeException exception
+    ) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problema.setTitle("Senha inválida");
 
         return problema;
     }
