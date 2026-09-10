@@ -1,5 +1,7 @@
 package com.gamevault.shared.exception;
 
+import com.gamevault.avaliacao.exception.AvaliacaoNaoEncontradaException;
+import com.gamevault.avaliacao.exception.NotaAvaliacaoInvalidaException;
 import com.gamevault.favorito.exception.FavoritoJaExisteException;
 import com.gamevault.favorito.exception.FavoritoNaoEncontradoException;
 import com.gamevault.listadesejos.exception.ItemListaDesejosJaExisteException;
@@ -30,6 +32,7 @@ public class TratadorGlobalExcecoes {
     @ExceptionHandler({
             FavoritoNaoEncontradoException.class,
             ItemListaDesejosNaoEncontradoException.class,
+            AvaliacaoNaoEncontradaException.class,
             UsuarioNaoEncontradoException.class
     })
     public ProblemDetail tratarRecursoNaoEncontrado(
@@ -57,6 +60,20 @@ public class TratadorGlobalExcecoes {
         );
 
         problema.setTitle("Item já existente na lista de desejos");
+
+        return problema;
+    }
+
+    @ExceptionHandler(NotaAvaliacaoInvalidaException.class)
+    public ProblemDetail tratarNotaAvaliacaoInvalida(
+            NotaAvaliacaoInvalidaException exception
+    ) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problema.setTitle("Nota de avaliação inválida");
 
         return problema;
     }
