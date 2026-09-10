@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -84,5 +86,46 @@ class UsuarioRepositoryIntegrationTest {
                         "email.inexistente@gamevault.test"
                 )
         );
+    }
+
+    @Test
+    void deveBuscarUsuarioPorEmail() {
+        Usuario usuario = new Usuario();
+        usuario.setName("Usuario Busca Email");
+        usuario.setUsername("usuario_busca_email");
+        usuario.setEmail("usuario.busca@gamevault.test");
+        usuario.setPassword("test-password-hash");
+
+        usuarioRepository.saveAndFlush(usuario);
+
+        Optional<Usuario> resultado =
+                usuarioRepository.findByEmail(
+                        "usuario.busca@gamevault.test"
+                );
+
+        assertTrue(resultado.isPresent());
+
+        Usuario usuarioEncontrado = resultado.orElseThrow();
+
+        assertAll(
+                () -> assertEquals(
+                        "usuario.busca@gamevault.test",
+                        usuarioEncontrado.getEmail()
+                ),
+                () -> assertEquals(
+                        "usuario_busca_email",
+                        usuarioEncontrado.getUsername()
+                )
+        );
+    }
+
+    @Test
+    void deveRetornarVazioQuandoEmailNaoExiste() {
+        Optional<Usuario> resultado =
+                usuarioRepository.findByEmail(
+                        "email.inexistente@gamevault.test"
+                );
+
+        assertTrue(resultado.isEmpty());
     }
 }
