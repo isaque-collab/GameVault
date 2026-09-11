@@ -4,15 +4,17 @@ import com.gamevault.listadesejos.dto.AdicionarItemListaDesejosRequisicao;
 import com.gamevault.listadesejos.dto.ItemListaDesejosResposta;
 import com.gamevault.listadesejos.entity.ItemListaDesejos;
 import com.gamevault.listadesejos.service.ListaDesejosService;
+import com.gamevault.user.security.UsuarioPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/usuarios/{usuarioId}/lista-desejos")
+@RequestMapping("/api/usuarios/me/lista-desejos")
 public class ListaDesejosController {
 
     private final ListaDesejosService listaDesejosService;
@@ -25,14 +27,15 @@ public class ListaDesejosController {
 
     @PostMapping
     public ResponseEntity<ItemListaDesejosResposta> adicionar(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
             @Valid @RequestBody AdicionarItemListaDesejosRequisicao requisicao
     ) {
 
-        ItemListaDesejos item = listaDesejosService.adicionar(
-                usuarioId,
-                requisicao.rawgGameId()
-        );
+        ItemListaDesejos item =
+                listaDesejosService.adicionar(
+                        usuarioPrincipal.getId(),
+                        requisicao.rawgGameId()
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -41,12 +44,14 @@ public class ListaDesejosController {
 
     @GetMapping
     public ResponseEntity<List<ItemListaDesejosResposta>> listar(
-            @PathVariable Long usuarioId
-    ){
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal
+    ) {
 
         List<ItemListaDesejosResposta> itens =
                 listaDesejosService
-                        .listar(usuarioId)
+                        .listar(
+                                usuarioPrincipal.getId()
+                        )
                         .stream()
                         .map(ItemListaDesejosResposta::de)
                         .toList();
@@ -56,13 +61,16 @@ public class ListaDesejosController {
 
     @DeleteMapping("/{rawgGameId}")
     public ResponseEntity<Void> remover(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
             @PathVariable Long rawgGameId
-    ){
+    ) {
         listaDesejosService.remover(
-                usuarioId,
-                rawgGameId);
+                usuarioPrincipal.getId(),
+                rawgGameId
+        );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }
