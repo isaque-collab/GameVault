@@ -1,5 +1,6 @@
 package com.gamevault.listadesejos.integration;
 
+import com.gamevault.user.security.UsuarioPrincipal;
 import com.gamevault.favorito.repository.FavoritoRepository;
 import com.gamevault.listadesejos.repository.ItemListaDesejosRepository;
 import com.gamevault.user.entity.Usuario;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -187,41 +189,54 @@ class ListaDesejosFluxoIntegracaoTest {
     }
 
     @Test
-    @WithMockUser
     void devePermitirMesmoJogoNosFavoritosENaListaDeDesejos()
             throws Exception {
 
         Long rawgGameId = 3498L;
 
+        UsuarioPrincipal usuarioPrincipal =
+                new UsuarioPrincipal(
+                        usuarioId,
+                        "usuario.integracao.wishlist@gamevault.test",
+                        "senha-hash-teste"
+                );
+
         mockMvc.perform(
-                        post(
-                                "/api/usuarios/{usuarioId}/favoritos",
-                                usuarioId
-                        )
+                        post("/api/usuarios/me/favoritos")
+                                .with(user(usuarioPrincipal))
                                 .with(csrf())
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content("""
-                                        {
-                                          "rawgGameId": 3498
-                                        }
-                                        """)
+                                    {
+                                      "rawgGameId": 3498
+                                    }
+                                    """)
                 )
-                .andExpect(status().isCreated());
+                .andExpect(
+                        status().isCreated()
+                );
 
         mockMvc.perform(
                         post(
                                 "/api/usuarios/{usuarioId}/lista-desejos",
                                 usuarioId
                         )
+                                .with(user(usuarioPrincipal))
                                 .with(csrf())
-                                .contentType(MediaType.APPLICATION_JSON)
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
                                 .content("""
-                                        {
-                                          "rawgGameId": 3498
-                                        }
-                                        """)
+                                    {
+                                      "rawgGameId": 3498
+                                    }
+                                    """)
                 )
-                .andExpect(status().isCreated());
+                .andExpect(
+                        status().isCreated()
+                );
 
         assertTrue(
                 favoritoRepository

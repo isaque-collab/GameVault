@@ -43,8 +43,6 @@ class AutenticacaoFluxoIntegracaoTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private Long usuarioId;
-
     @BeforeEach
     void prepararUsuario() {
         Usuario usuario = new Usuario();
@@ -55,10 +53,7 @@ class AutenticacaoFluxoIntegracaoTest {
                 passwordEncoder.encode(SENHA)
         );
 
-        Usuario usuarioSalvo =
-                usuarioRepository.saveAndFlush(usuario);
-
-        usuarioId = usuarioSalvo.getId();
+        usuarioRepository.saveAndFlush(usuario);
     }
 
     @Test
@@ -106,9 +101,7 @@ class AutenticacaoFluxoIntegracaoTest {
 
         mockMvc.perform(
                         get(
-                                "/api/usuarios/{usuarioId}/favoritos",
-                                usuarioId
-                        )
+                                "/api/usuarios/me/favoritos")
                 )
                 .andExpect(
                         status().isUnauthorized()
@@ -124,9 +117,7 @@ class AutenticacaoFluxoIntegracaoTest {
 
         mockMvc.perform(
                         get(
-                                "/api/usuarios/{usuarioId}/favoritos",
-                                usuarioId
-                        )
+                                "/api/usuarios/me/favoritos")
                                 .session(sessao)
                 )
                 .andExpect(
