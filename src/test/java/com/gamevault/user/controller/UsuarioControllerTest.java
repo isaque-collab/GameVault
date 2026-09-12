@@ -2,6 +2,7 @@ package com.gamevault.user.controller;
 
 import com.gamevault.shared.exception.TratadorGlobalExcecoes;
 import com.gamevault.user.entity.Usuario;
+import com.gamevault.user.security.UsuarioPrincipal;
 import com.gamevault.user.exception.EmailJaCadastradoException;
 import com.gamevault.user.exception.SenhasNaoCoincidemException;
 import com.gamevault.user.exception.UsernameJaCadastradoException;
@@ -20,6 +21,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @WebMvcTest(UsuarioController.class)
 @Import(TratadorGlobalExcecoes.class)
@@ -306,5 +309,79 @@ class UsuarioControllerTest {
                         jsonPath("$.title")
                                 .value("Senha inválida")
                 );
+    }
+
+    @Test
+    void deveBuscarPerfilDoUsuarioAutenticado()
+            throws Exception {
+
+        Usuario usuario = mock(Usuario.class);
+
+        when(usuario.getId())
+                .thenReturn(1L);
+
+        when(usuario.getName())
+                .thenReturn("Isaque Costa");
+
+        when(usuario.getUsername())
+                .thenReturn("isaque");
+
+        when(usuario.getEmail())
+                .thenReturn("isaque@gamevault.test");
+
+        when(usuario.getProfileImageUrl())
+                .thenReturn(null);
+
+        when(
+                usuarioService.buscarPorId(1L)
+        ).thenReturn(usuario);
+
+        mockMvc.perform(
+                        get("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.id")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.nome")
+                                .value("Isaque Costa")
+                )
+                .andExpect(
+                        jsonPath("$.username")
+                                .value("isaque")
+                )
+                .andExpect(
+                        jsonPath("$.email")
+                                .value("isaque@gamevault.test")
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(nullValue())
+                )
+                .andExpect(
+                        jsonPath("$.senha")
+                                .doesNotExist()
+                )
+                .andExpect(
+                        jsonPath("$.password")
+                                .doesNotExist()
+                );
+
+        verify(usuarioService)
+                .buscarPorId(1L);
+    }
+
+    private UsuarioPrincipal usuarioPrincipal() {
+
+        return new UsuarioPrincipal(
+                1L,
+                "isaque@gamevault.test",
+                "{bcrypt}hash"
+        );
     }
 }

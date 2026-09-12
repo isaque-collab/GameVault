@@ -1,10 +1,7 @@
 package com.gamevault.user.service;
 
 import com.gamevault.user.entity.Usuario;
-import com.gamevault.user.exception.EmailJaCadastradoException;
-import com.gamevault.user.exception.SenhaInvalidaException;
-import com.gamevault.user.exception.SenhasNaoCoincidemException;
-import com.gamevault.user.exception.UsernameJaCadastradoException;
+import com.gamevault.user.exception.*;
 import com.gamevault.user.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +10,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -211,5 +210,41 @@ class UsuarioServiceTest {
         ).save(any());
 
         verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void deveBuscarUsuarioPorId() {
+
+        Usuario usuario = new Usuario();
+        usuario.setName("Isaque");
+
+        when(usuarioRepository.findById(1L))
+                .thenReturn(Optional.of(usuario));
+
+        Usuario resultado =
+                usuarioService.buscarPorId(1L);
+
+        assertSame(
+                usuario,
+                resultado
+        );
+
+        verify(usuarioRepository)
+                .findById(1L);
+    }
+
+    @Test
+    void deveRetornarErroQuandoUsuarioNaoForEncontradoPorId() {
+
+        when(usuarioRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                UsuarioNaoEncontradoException.class,
+                () -> usuarioService.buscarPorId(1L)
+        );
+
+        verify(usuarioRepository)
+                .findById(1L);
     }
 }
