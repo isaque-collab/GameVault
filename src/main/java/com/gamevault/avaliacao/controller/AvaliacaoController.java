@@ -5,12 +5,14 @@ import com.gamevault.avaliacao.dto.AvaliacaoResposta;
 import com.gamevault.avaliacao.entity.Avaliacao;
 import com.gamevault.avaliacao.exception.AvaliacaoNaoEncontradaException;
 import com.gamevault.avaliacao.service.AvaliacaoService;
+import com.gamevault.user.security.UsuarioPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/usuarios/{usuarioId}/avaliacoes")
+@RequestMapping("/api/usuarios/me/avaliacoes")
 public class AvaliacaoController {
 
     private final AvaliacaoService avaliacaoService;
@@ -21,12 +23,12 @@ public class AvaliacaoController {
 
     @PutMapping("/{rawgGameId}")
     public ResponseEntity<AvaliacaoResposta> avaliar(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
             @PathVariable Long rawgGameId,
             @Valid @RequestBody AvaliacaoRequisicao requisicao
     ) {
         Avaliacao avaliacao = avaliacaoService.avaliar(
-                usuarioId,
+                usuarioPrincipal.getId(),
                 rawgGameId,
                 requisicao.nota()
         );
@@ -38,17 +40,17 @@ public class AvaliacaoController {
 
     @GetMapping("/{rawgGameId}")
     public ResponseEntity<AvaliacaoResposta> buscarAvaliacao(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
             @PathVariable Long rawgGameId
     ) {
         Avaliacao avaliacao = avaliacaoService
                 .buscarAvaliacaoDoUsuario(
-                        usuarioId,
+                        usuarioPrincipal.getId(),
                         rawgGameId
                 )
                 .orElseThrow(
                         () -> new AvaliacaoNaoEncontradaException(
-                                usuarioId,
+                                usuarioPrincipal.getId(),
                                 rawgGameId
                         )
                 );
@@ -59,10 +61,10 @@ public class AvaliacaoController {
 
     @DeleteMapping("/{rawgGameId}")
     public ResponseEntity<Void> removerAvaliacao(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
             @PathVariable Long rawgGameId
     ) {
-        avaliacaoService.remover(usuarioId, rawgGameId);
+        avaliacaoService.remover(usuarioPrincipal.getId(), rawgGameId);
 
         return ResponseEntity.noContent().build();
     }
