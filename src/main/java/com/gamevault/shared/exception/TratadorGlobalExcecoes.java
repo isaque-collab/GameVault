@@ -97,7 +97,8 @@ public class TratadorGlobalExcecoes {
 
     @ExceptionHandler({
             SenhaInvalidaException.class,
-            SenhasNaoCoincidemException.class
+            SenhasNaoCoincidemException.class,
+            SenhaAtualInvalidaException.class
     })
     public ProblemDetail tratarSenhaInvalida(
             RuntimeException exception

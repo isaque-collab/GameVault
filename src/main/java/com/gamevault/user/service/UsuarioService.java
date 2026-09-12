@@ -134,4 +134,34 @@ public class UsuarioService {
             );
         }
     }
+
+    @Transactional
+    public void alterarSenha(
+            Long usuarioId,
+            String senhaAtual,
+            String novaSenha,
+            String confirmacaoSenha
+    ) {
+        Usuario usuario =
+                buscarPorId(usuarioId);
+
+        if (
+                !passwordEncoder.matches(
+                        senhaAtual,
+                        usuario.getPassword()
+                )
+        ) {
+            throw new SenhaAtualInvalidaException();
+        }
+
+        validarSenha(
+                novaSenha,
+                confirmacaoSenha
+        );
+
+        usuario.setPassword(
+                passwordEncoder.encode(novaSenha)
+        );
+
+    }
 }

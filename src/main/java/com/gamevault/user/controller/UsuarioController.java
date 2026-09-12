@@ -1,5 +1,6 @@
 package com.gamevault.user.controller;
 
+import com.gamevault.user.dto.AlteracaoSenhaRequisicao;
 import com.gamevault.user.dto.AtualizacaoPerfilRequisicao;
 import com.gamevault.user.dto.CadastroUsuarioRequisicao;
 import com.gamevault.user.dto.UsuarioResposta;
@@ -70,5 +71,20 @@ public class UsuarioController {
         return ResponseEntity.ok(
                 UsuarioResposta.de(usuario)
         );
+    }
+
+    @PutMapping("/me/senha")
+    public ResponseEntity<Void> alterarSenha(
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
+            @Valid @RequestBody AlteracaoSenhaRequisicao requisicao
+    ) {
+        usuarioService.alterarSenha(
+                usuarioPrincipal.getId(),
+                requisicao.senhaAtual(),
+                requisicao.novaSenha(),
+                requisicao.confirmacaoNovaSenha()
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }
