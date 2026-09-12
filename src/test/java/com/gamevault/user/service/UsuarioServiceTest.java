@@ -811,4 +811,44 @@ class UsuarioServiceTest {
                 passwordEncoder
         );
     }
+
+    @Test
+    void deveExcluirContaDoUsuario() {
+
+        Usuario usuario = new Usuario();
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        usuarioService.excluirConta(1L);
+
+        verify(usuarioRepository)
+                .findById(1L);
+
+        verify(usuarioRepository)
+                .delete(usuario);
+    }
+
+    @Test
+    void deveRetornarErroAoExcluirContaDeUsuarioInexistente() {
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        assertThrows(
+                UsuarioNaoEncontradoException.class,
+                () -> usuarioService.excluirConta(1L)
+        );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).delete(any());
+    }
 }

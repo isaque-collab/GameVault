@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @WebMvcTest(UsuarioController.class)
 @Import(TratadorGlobalExcecoes.class)
@@ -802,6 +803,23 @@ class UsuarioControllerTest {
         verifyNoInteractions(
                 usuarioService
         );
+    }
+
+    @Test
+    void deveExcluirContaDoUsuarioAutenticado()
+            throws Exception {
+
+        mockMvc.perform(
+                        delete("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        verify(usuarioService)
+                .excluirConta(1L);
     }
 
     private UsuarioPrincipal usuarioPrincipal() {

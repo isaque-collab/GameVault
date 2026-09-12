@@ -1,7 +1,14 @@
 package com.gamevault.user.integration;
 
+import com.gamevault.avaliacao.entity.Avaliacao;
+import com.gamevault.avaliacao.repository.AvaliacaoRepository;
+import com.gamevault.favorito.entity.Favorito;
+import com.gamevault.favorito.repository.FavoritoRepository;
+import com.gamevault.listadesejos.entity.ItemListaDesejos;
+import com.gamevault.listadesejos.repository.ItemListaDesejosRepository;
 import com.gamevault.user.entity.Usuario;
 import com.gamevault.user.repository.UsuarioRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,6 +38,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureMockMvc
 @Transactional
 class UsuarioPerfilFluxoIntegracaoTest {
+
+    @Autowired
+    private FavoritoRepository favoritoRepository;
+
+    @Autowired
+    private ItemListaDesejosRepository itemListaDesejosRepository;
+
+    @Autowired
+    private AvaliacaoRepository avaliacaoRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private static final String EMAIL =
             "usuario.perfil@gamevault.test";
@@ -452,6 +472,148 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                       "confirmacaoNovaSenha": "novaSenha123"
                                     }
                                     """)
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+    }
+
+    @Test
+    void deveExcluirContaERemoverDadosRelacionados()
+            throws Exception {
+
+        Usuario usuario =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        Long usuarioId =
+                usuario.getId();
+
+        Favorito favorito =
+                new Favorito();
+
+        favorito.setUsuario(usuario);
+        favorito.setRawgGameId(100L);
+
+        favoritoRepository.save(favorito);
+
+        ItemListaDesejos itemListaDesejos =
+                new ItemListaDesejos();
+
+        itemListaDesejos.setUsuario(usuario);
+        itemListaDesejos.setRawgGameId(200L);
+
+        itemListaDesejosRepository.save(
+                itemListaDesejos
+        );
+
+        Avaliacao avaliacao =
+                new Avaliacao();
+
+        avaliacao.setUsuario(usuario);
+        avaliacao.setRawgGameId(300L);
+        avaliacao.setRating((byte) 5);
+
+        avaliacaoRepository.save(avaliacao);
+
+        /*
+        * Garante que todos os registros existam
+        * fisicamente no banco antes da exclusão
+         */
+        entityManager.flush();
+        entityManager.clear();
+
+        assertFalse(
+                favoritoRepository
+                        .findAllByUsuarioId(usuarioId)
+                        .isEmpty()
+        );
+
+        assertFalse(
+                itemListaDesejosRepository
+                        .findAllByUsuarioId(usuarioId)
+                        .isEmpty()
+        );
+
+        assertTrue(
+                avaliacaoRepository
+                        .findByUsuarioIdAndRawgGameId(
+                                usuarioId,
+                                300L
+                        )
+                        .isPresent()
+        );
+
+        /*
+        * As consultas acima carregam novamente
+        * entidades no contexto de persistência.
+        *
+        * Limpamos o contexto para que o Hibernate
+        * não tente gerenciar os relacionamentos
+        * durante a remoção do usuário.
+         */
+        entityManager.clear();
+
+        MockHttpSession sessao =
+                autenticar();
+
+        mockMvc.perform(
+                        delete("/api/usuarios/me")
+                                .session(sessao)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        /*
+         * Executa fisicamente o DELETE.
+         * O banco então executa os
+         * ON DELETE CASCADE.
+         */
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(
+                usuarioRepository
+                        .findById(usuarioId)
+                        .isEmpty()
+        );
+
+        assertTrue(
+                favoritoRepository
+                        .findAllByUsuarioId(usuarioId)
+                        .isEmpty()
+        );
+
+        assertTrue(
+                itemListaDesejosRepository
+                        .findAllByUsuarioId(usuarioId)
+                        .isEmpty()
+        );
+
+        assertTrue(
+                avaliacaoRepository
+                        .findByUsuarioIdAndRawgGameId(
+                                usuarioId,
+                                300L
+                        )
+                        .isEmpty()
+        );
+
+        assertTrue(
+                sessao.isInvalid()
+        );
+    }
+
+    @Test
+    void deveBloquearExclusaoDeContaSemAutenticacao()
+            throws Exception {
+
+        mockMvc.perform(
+                        delete("/api/usuarios/me")
+                                .with(csrf())
                 )
                 .andExpect(
                         status().isUnauthorized()
