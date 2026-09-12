@@ -22,6 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -287,6 +290,171 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                 .value(
                                         "Dados de usuário já cadastrados"
                                 )
+                );
+    }
+
+    @Test
+    void deveAlterarSenhaEPermitirLoginSomenteComNovaSenha()
+            throws Exception {
+
+        Usuario usuarioAntes =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        String hashAnterior =
+                usuarioAntes.getPassword();
+
+        MockHttpSession sessao =
+                autenticar();
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .session(sessao)
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senha123",
+                                      "novaSenha": "novaSenha123",
+                                      "confirmacaoNovaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        usuarioRepository.flush();
+
+        Usuario usuarioAtualizado =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        assertAll(
+                () -> assertNotEquals(
+                        hashAnterior,
+                        usuarioAtualizado.getPassword()
+                ),
+                () -> assertTrue(
+                        passwordEncoder.matches(
+                                "novaSenha123",
+                                usuarioAtualizado.getPassword()
+                        )
+                ),
+                () -> assertFalse(
+                        passwordEncoder.matches(
+                                SENHA,
+                                usuarioAtualizado.getPassword()
+                        )
+                )
+        );
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_FORM_URLENCODED
+                                )
+                                .param(
+                                        "email",
+                                        EMAIL
+                                )
+                                .param(
+                                        "senha",
+                                        SENHA
+                                )
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_FORM_URLENCODED
+                                )
+                                .param(
+                                        "email",
+                                        EMAIL
+                                )
+                                .param(
+                                        "senha",
+                                        "novaSenha123"
+                                )
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+    }
+
+    @Test
+    void deveImpedirAlteracaoQuandoSenhaAtualEstiverIncorreta()
+            throws Exception {
+
+        MockHttpSession sessao =
+                autenticar();
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .session(sessao)
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senha-incorreta",
+                                      "novaSenha": "novaSenha123",
+                                      "confirmacaoNovaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value("Senha inválida")
+                );
+
+        Usuario usuario =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        assertTrue(
+                passwordEncoder.matches(
+                        SENHA,
+                        usuario.getPassword()
+                )
+        );
+    }
+
+    @Test
+    void deveBloquearAlteracaoDeSenhaSemAutenticacao()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senha123",
+                                      "novaSenha": "novaSenha123",
+                                      "confirmacaoNovaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isUnauthorized()
                 );
     }
 }

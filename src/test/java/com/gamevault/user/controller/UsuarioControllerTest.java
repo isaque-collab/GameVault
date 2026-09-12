@@ -2,6 +2,7 @@ package com.gamevault.user.controller;
 
 import com.gamevault.shared.exception.TratadorGlobalExcecoes;
 import com.gamevault.user.entity.Usuario;
+import com.gamevault.user.exception.SenhaAtualInvalidaException;
 import com.gamevault.user.security.UsuarioPrincipal;
 import com.gamevault.user.exception.EmailJaCadastradoException;
 import com.gamevault.user.exception.SenhasNaoCoincidemException;
@@ -649,6 +650,158 @@ class UsuarioControllerTest {
                                         "Dados de usuário já cadastrados"
                                 )
                 );
+    }
+
+    @Test
+    void deveAlterarSenhaDoUsuarioAutenticado()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senhaAtual123",
+                                      "novaSenha": "novaSenha123",
+                                      "confirmacaoNovaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        verify(usuarioService)
+                .alterarSenha(
+                        1L,
+                        "senhaAtual123",
+                        "novaSenha123",
+                        "novaSenha123"
+                );
+    }
+
+    @Test
+    void deveRetornarErroQuandoSenhaAtualEstiverIncorreta()
+            throws Exception {
+
+        doThrow(
+                new SenhaAtualInvalidaException()
+        ).when(usuarioService)
+                .alterarSenha(
+                        1L,
+                        "senhaErrada",
+                        "novaSenha123",
+                        "novaSenha123"
+                );
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senhaErrada",
+                                      "novaSenha": "novaSenha123",
+                                      "confirmacaoNovaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value("Senha inválida")
+                );
+    }
+
+    @Test
+    void deveRejeitarNovaSenhaCurta()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senhaAtual123",
+                                      "novaSenha": "1234567",
+                                      "confirmacaoNovaSenha": "1234567"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+
+        verifyNoInteractions(
+                usuarioService
+        );
+    }
+
+    @Test
+    void deveRejeitarAlteracaoSemSenhaAtual()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "novaSenha": "novaSenha123",
+                                      "confirmacaoNovaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+
+        verifyNoInteractions(
+                usuarioService
+        );
+    }
+
+    @Test
+    void deveRejeitarAlteracaoSemConfirmacaoDaNovaSenha()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me/senha")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "senhaAtual": "senhaAtual123",
+                                      "novaSenha": "novaSenha123"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+
+        verifyNoInteractions(
+                usuarioService
+        );
     }
 
     private UsuarioPrincipal usuarioPrincipal() {

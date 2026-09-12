@@ -1,11 +1,7 @@
 package com.gamevault.user.service;
 
 import com.gamevault.user.entity.Usuario;
-import com.gamevault.user.exception.EmailJaCadastradoException;
-import com.gamevault.user.exception.SenhaInvalidaException;
-import com.gamevault.user.exception.SenhasNaoCoincidemException;
-import com.gamevault.user.exception.UsernameJaCadastradoException;
-import com.gamevault.user.exception.UsuarioNaoEncontradoException;
+import com.gamevault.user.exception.*;
 import com.gamevault.user.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -619,5 +615,200 @@ class UsuarioServiceTest {
                 usuarioRepository,
                 never()
         ).save(any());
+    }
+
+    @Test
+    void deveAlterarSenhaDoUsuario() {
+
+        Usuario usuario = new Usuario();
+        usuario.setPassword("{bcrypt}hash-antigo");
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                passwordEncoder.matches(
+                        "senhaAtual123",
+                        "{bcrypt}hash-antigo"
+                )
+        ).thenReturn(true);
+
+        when(
+                passwordEncoder.encode(
+                        "novaSenha123"
+                )
+        ).thenReturn(
+                "{bcrypt}hash-novo"
+        );
+
+        usuarioService.alterarSenha(
+                1L,
+                "senhaAtual123",
+                "novaSenha123",
+                "novaSenha123"
+        );
+
+        assertEquals(
+                "{bcrypt}hash-novo",
+                usuario.getPassword()
+        );
+
+        verify(passwordEncoder)
+                .matches(
+                        "senhaAtual123",
+                        "{bcrypt}hash-antigo"
+                );
+
+        verify(passwordEncoder)
+                .encode(
+                        "novaSenha123"
+                );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void deveRejeitarAlteracaoQuandoSenhaAtualEstiverIncorreta() {
+
+        Usuario usuario = new Usuario();
+        usuario.setPassword("{bcrypt}hash-antigo");
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                passwordEncoder.matches(
+                        "senhaErrada",
+                        "{bcrypt}hash-antigo"
+                )
+        ).thenReturn(false);
+
+        assertThrows(
+                SenhaAtualInvalidaException.class,
+                () -> usuarioService.alterarSenha(
+                        1L,
+                        "senhaErrada",
+                        "novaSenha123",
+                        "novaSenha123"
+                )
+        );
+
+        assertEquals(
+                "{bcrypt}hash-antigo",
+                usuario.getPassword()
+        );
+
+        verify(
+                passwordEncoder,
+                never()
+        ).encode(anyString());
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void deveRejeitarNovaSenhaComMenosDeOitoCaracteres() {
+
+        Usuario usuario = new Usuario();
+        usuario.setPassword("{bcrypt}hash-antigo");
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                passwordEncoder.matches(
+                        "senhaAtual123",
+                        "{bcrypt}hash-antigo"
+                )
+        ).thenReturn(true);
+
+        assertThrows(
+                SenhaInvalidaException.class,
+                () -> usuarioService.alterarSenha(
+                        1L,
+                        "senhaAtual123",
+                        "1234567",
+                        "1234567"
+                )
+        );
+
+        verify(
+                passwordEncoder,
+                never()
+        ).encode(anyString());
+    }
+
+    @Test
+    void deveRejeitarAlteracaoQuandoNovaSenhaEConfirmacaoNaoCoincidirem() {
+
+        Usuario usuario = new Usuario();
+        usuario.setPassword("{bcrypt}hash-antigo");
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                passwordEncoder.matches(
+                        "senhaAtual123",
+                        "{bcrypt}hash-antigo"
+                )
+        ).thenReturn(true);
+
+        assertThrows(
+                SenhasNaoCoincidemException.class,
+                () -> usuarioService.alterarSenha(
+                        1L,
+                        "senhaAtual123",
+                        "novaSenha123",
+                        "outraSenha123"
+                )
+        );
+
+        verify(
+                passwordEncoder,
+                never()
+        ).encode(anyString());
+    }
+
+    @Test
+    void deveRetornarErroAoAlterarSenhaDeUsuarioInexistente() {
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        assertThrows(
+                UsuarioNaoEncontradoException.class,
+                () -> usuarioService.alterarSenha(
+                        1L,
+                        "senhaAtual123",
+                        "novaSenha123",
+                        "novaSenha123"
+                )
+        );
+
+        verifyNoInteractions(
+                passwordEncoder
+        );
     }
 }
