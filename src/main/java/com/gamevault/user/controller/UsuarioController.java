@@ -3,14 +3,13 @@ package com.gamevault.user.controller;
 import com.gamevault.user.dto.CadastroUsuarioRequisicao;
 import com.gamevault.user.dto.UsuarioResposta;
 import com.gamevault.user.entity.Usuario;
+import com.gamevault.user.security.UsuarioPrincipal;
 import com.gamevault.user.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -37,5 +36,19 @@ public class UsuarioController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(UsuarioResposta.de(usuario));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResposta> buscarPerfil(
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal
+    ) {
+        Usuario usuario =
+                usuarioService.buscarPorId(
+                        usuarioPrincipal.getId()
+                );
+
+        return ResponseEntity.ok(
+                UsuarioResposta.de(usuario)
+        );
     }
 }

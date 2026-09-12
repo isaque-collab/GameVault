@@ -1,10 +1,7 @@
 package com.gamevault.user.service;
 
 import com.gamevault.user.entity.Usuario;
-import com.gamevault.user.exception.EmailJaCadastradoException;
-import com.gamevault.user.exception.SenhaInvalidaException;
-import com.gamevault.user.exception.SenhasNaoCoincidemException;
-import com.gamevault.user.exception.UsernameJaCadastradoException;
+import com.gamevault.user.exception.*;
 import com.gamevault.user.repository.UsuarioRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +49,11 @@ public class UsuarioService {
         );
 
         return usuarioRepository.save(usuario);
+    }
+
+    public Usuario buscarPorId( Long usuarioId){
+        return usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException(usuarioId));
     }
 
     private void validarSenha(
