@@ -164,4 +164,13 @@ public class UsuarioService {
         );
 
     }
+
+    @Transactional
+    public void excluirConta(Long usuarioId) {
+
+        Usuario usuario =
+                buscarPorId(usuarioId);
+
+        usuarioRepository.delete(usuario);
+    }
 }

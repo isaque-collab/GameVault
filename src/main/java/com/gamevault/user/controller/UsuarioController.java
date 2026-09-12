@@ -7,10 +7,14 @@ import com.gamevault.user.dto.UsuarioResposta;
 import com.gamevault.user.entity.Usuario;
 import com.gamevault.user.security.UsuarioPrincipal;
 import com.gamevault.user.service.UsuarioService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -83,6 +87,29 @@ public class UsuarioController {
                 requisicao.senhaAtual(),
                 requisicao.novaSenha(),
                 requisicao.confirmacaoNovaSenha()
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> excluirConta(
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
+            Authentication authentication,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        usuarioService.excluirConta(
+                usuarioPrincipal.getId()
+        );
+
+        SecurityContextLogoutHandler logoutHandler =
+                new SecurityContextLogoutHandler();
+
+        logoutHandler.logout(
+                request,
+                response,
+                authentication
         );
 
         return ResponseEntity.noContent().build();
