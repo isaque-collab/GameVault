@@ -1,5 +1,6 @@
 package com.gamevault.user.controller;
 
+import com.gamevault.user.dto.AtualizacaoPerfilRequisicao;
 import com.gamevault.user.dto.CadastroUsuarioRequisicao;
 import com.gamevault.user.dto.UsuarioResposta;
 import com.gamevault.user.entity.Usuario;
@@ -45,6 +46,25 @@ public class UsuarioController {
         Usuario usuario =
                 usuarioService.buscarPorId(
                         usuarioPrincipal.getId()
+                );
+
+        return ResponseEntity.ok(
+                UsuarioResposta.de(usuario)
+        );
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UsuarioResposta> atualizarPerfil(
+            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal,
+            @Valid @RequestBody AtualizacaoPerfilRequisicao requisicao
+    ) {
+        Usuario usuario =
+                usuarioService.atualizarPerfil(
+                        usuarioPrincipal.getId(),
+                        requisicao.nome(),
+                        requisicao.username(),
+                        requisicao.email(),
+                        requisicao.imagemPerfil()
                 );
 
         return ResponseEntity.ok(

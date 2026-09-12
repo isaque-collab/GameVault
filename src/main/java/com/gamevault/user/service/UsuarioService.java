@@ -81,4 +81,57 @@ public class UsuarioService {
             throw new EmailJaCadastradoException(email);
         }
     }
+
+    @Transactional
+    public Usuario atualizarPerfil(
+            Long usuarioId,
+            String nome,
+            String username,
+            String email,
+            String imagemPerfil
+    ) {
+        Usuario usuario = buscarPorId(usuarioId);
+
+        validarUnicidadeNaAtualizacao(
+                usuarioId,
+                username,
+                email
+        );
+
+        usuario.setName(nome);
+        usuario.setUsername(username);
+        usuario.setEmail(email);
+        usuario.setProfileImageUrl(imagemPerfil);
+
+        return usuario;
+
+    }
+
+    private void validarUnicidadeNaAtualizacao(
+            Long usuarioId,
+            String username,
+            String email
+    ) {
+        if (
+                usuarioRepository.existsByUsernameAndIdNot(
+                        username,
+                        usuarioId
+                )
+        ) {
+            throw new UsernameJaCadastradoException(
+                    username
+            );
+        }
+
+        if (
+                usuarioRepository.existsByEmailAndIdNot(
+                        email,
+                        usuarioId
+                )
+        ) {
+            throw new EmailJaCadastradoException(
+                    email
+            );
+        }
+    }
 }
