@@ -1,14 +1,20 @@
 # GameVault
 
-O **GameVault** é uma aplicação web para descoberta, organização e avaliação de jogos. O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo e mantém no banco de dados apenas os dados próprios da aplicação, como usuários, favoritos, wishlist e avaliações.
+O **GameVault** é uma aplicação web para descoberta, organização e avaliação de jogos.
+
+O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de jogos e mantém no banco de dados apenas os dados próprios da aplicação, como usuários, favoritos, lista de desejos e avaliações.
 
 > **Status:** em desenvolvimento
-> **Etapa atual:** Desenvolvimento Back-end — funcionalidades de Favoritos, Lista de Desejos e Avaliações concluídas e validadas ponta a ponta. Próximo foco: cadastro e gerenciamento de usuário.
+> **Etapa atual:** desenvolvimento Back-end — autenticação, gerenciamento de usuários, Favoritos, Lista de Desejos e Avaliações concluídos e validados.
+> **Próximo foco:** integração com a API RAWG.
+
+---
 
 ## Funcionalidades planejadas para a V1
 
-* Cadastro, autenticação e gerenciamento de conta.
-* Perfil do usuário com foto.
+* Cadastro e autenticação de usuários.
+* Gerenciamento da própria conta.
+* Perfil do usuário com imagem.
 * Busca de jogos.
 * Listagem de jogos populares.
 * Lançamentos recentes.
@@ -18,9 +24,11 @@ O **GameVault** é uma aplicação web para descoberta, organização e avaliaç
 * Avaliação de jogos com notas de 1 a 5.
 * Integração com a API RAWG.
 
-## Tecnologias
+---
 
-### Back-end
+# Tecnologias
+
+## Back-end
 
 * Java 21
 * Spring Boot 4.1.1
@@ -30,7 +38,7 @@ O **GameVault** é uma aplicação web para descoberta, organização e avaliaç
 * Spring Security
 * Maven
 
-### Banco de dados e infraestrutura
+## Banco de dados e infraestrutura
 
 * MySQL 8.4 LTS
 * Docker
@@ -38,7 +46,7 @@ O **GameVault** é uma aplicação web para descoberta, organização e avaliaç
 * Flyway
 * DBeaver
 
-### Testes
+## Testes
 
 * JUnit 5
 * Mockito
@@ -46,11 +54,13 @@ O **GameVault** é uma aplicação web para descoberta, organização e avaliaç
 * Spring Boot Test
 * Spring Security Test
 
-## Arquitetura
+---
+
+# Arquitetura
 
 O projeto segue uma arquitetura de **monólito modular por funcionalidade**.
 
-A estrutura implementada atualmente é organizada em módulos como:
+A estrutura atual é organizada em módulos como:
 
 ```text
 com.gamevault
@@ -61,7 +71,7 @@ com.gamevault
 └── user
 ```
 
-Cada funcionalidade evolui conforme a necessidade utilizando camadas como:
+Cada funcionalidade utiliza, conforme necessário, uma estrutura semelhante a:
 
 ```text
 Controller
@@ -75,13 +85,19 @@ Repository
 Entity
 ```
 
-A integração com a RAWG será isolada em um cliente próprio, evitando acoplamento direto entre a API externa e as demais camadas da aplicação.
+As regras de negócio permanecem concentradas na camada de serviço, enquanto os controllers são responsáveis pela comunicação HTTP.
 
-## Persistência
+A integração com a RAWG será isolada em um cliente próprio para evitar acoplamento direto entre a API externa e as demais funcionalidades do sistema.
 
-O catálogo de jogos **não é persistido localmente**. Os jogos são identificados pelo ID fornecido pela RAWG.
+---
 
-O banco de dados do GameVault contém atualmente:
+# Persistência
+
+O catálogo completo de jogos **não é persistido localmente**.
+
+Os jogos são identificados internamente pelo ID fornecido pela RAWG.
+
+O banco de dados do GameVault possui atualmente:
 
 ```text
 users
@@ -90,47 +106,174 @@ wishlist
 reviews
 ```
 
-O Flyway controla a evolução do schema por meio de migrations versionadas.
+O Flyway controla a evolução do schema através de migrations versionadas.
 
-### Regras já implementadas no banco
-
-* `username` único.
-* `email` único.
-* Um mesmo jogo não pode aparecer duas vezes nos favoritos do mesmo usuário.
-* Um mesmo jogo não pode aparecer duas vezes na wishlist do mesmo usuário.
-* Um usuário pode possuir apenas uma avaliação por jogo.
-* Avaliações aceitam notas inteiras de 1 a 5.
-* A exclusão de um usuário remove seus favoritos, itens da wishlist e avaliações por `ON DELETE CASCADE`.
-* Um jogo pode estar simultaneamente nos favoritos e na wishlist do mesmo usuário.
-
-## Estrutura de banco atual
-
-A migration inicial está em:
+A migration inicial está localizada em:
 
 ```text
 src/main/resources/db/migration/V1__create_initial_schema.sql
 ```
 
-Ela cria as tabelas:
-
-```text
-users
-favorites
-wishlist
-reviews
-```
-
-O Hibernate está configurado com:
+O Hibernate utiliza:
 
 ```yaml
 ddl-auto: validate
 ```
 
-Assim, o schema é controlado pelo Flyway e o Hibernate apenas valida se as entidades correspondem ao banco.
+Dessa forma:
 
-## Favoritos
+* o Flyway controla o schema;
+* o Hibernate apenas valida a compatibilidade entre entidades e banco.
 
-A funcionalidade de Favoritos foi concluída no back-end e possui atualmente:
+---
+
+## Regras de integridade implementadas
+
+* `username` deve ser único.
+* `email` deve ser único.
+* Um jogo não pode aparecer duas vezes nos Favoritos do mesmo usuário.
+* Um jogo não pode aparecer duas vezes na Lista de Desejos do mesmo usuário.
+* Um usuário pode possuir apenas uma avaliação por jogo.
+* Avaliações aceitam notas inteiras de 1 a 5.
+* Um jogo pode estar simultaneamente nos Favoritos e na Lista de Desejos.
+* A exclusão de um usuário remove automaticamente seus Favoritos, itens da Lista de Desejos e Avaliações através de `ON DELETE CASCADE`.
+
+---
+
+# Autenticação e segurança
+
+O GameVault utiliza **autenticação baseada em sessão HTTP com Spring Security**.
+
+Após o login bem-sucedido, o servidor mantém a autenticação através da sessão e do cookie `JSESSIONID`.
+
+O usuário autenticado é representado internamente por `UsuarioPrincipal`.
+
+As funcionalidades privadas utilizam:
+
+```java
+@AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal
+```
+
+para obter o usuário da sessão.
+
+Dessa forma, os endpoints privados não recebem mais um `usuarioId` fornecido pelo cliente.
+
+Exemplo:
+
+```text
+/api/usuarios/me/favoritos
+```
+
+em vez de:
+
+```text
+/api/usuarios/{usuarioId}/favoritos
+```
+
+Isso evita que um usuário tente acessar dados pertencentes a outro usuário simplesmente alterando um ID na URL.
+
+---
+
+## CSRF
+
+O Spring Security mantém proteção contra **CSRF** habilitada.
+
+O endpoint:
+
+```text
+GET /api/csrf
+```
+
+pode ser utilizado pelo cliente para obter as informações necessárias para requisições protegidas por CSRF.
+
+Requisições que alteram estado, como `POST`, `PUT` e `DELETE`, devem utilizar um token CSRF válido quando aplicável.
+
+---
+
+## Endpoints de autenticação
+
+| Método | Endpoint           | Descrição                       | Resposta esperada |
+| ------ | ------------------ | ------------------------------- | ----------------- |
+| `GET`  | `/api/csrf`        | Obtém informações do token CSRF | `200 OK`          |
+| `POST` | `/api/auth/login`  | Autentica o usuário             | `204 No Content`  |
+| `POST` | `/api/auth/logout` | Encerra a sessão autenticada    | `204 No Content`  |
+
+O login utiliza os parâmetros:
+
+```text
+email
+senha
+```
+
+Em caso de credenciais inválidas:
+
+```text
+401 Unauthorized
+```
+
+O logout:
+
+* invalida a sessão;
+* limpa a autenticação;
+* remove o cookie `JSESSIONID`.
+
+---
+
+# Usuários e gerenciamento de conta
+
+O módulo `user` implementa atualmente:
+
+```text
+user
+├── controller
+├── dto
+├── entity
+├── exception
+├── repository
+├── security
+└── service
+```
+
+## Regras implementadas
+
+* Cadastro de usuário.
+* Validação de username único.
+* Validação de e-mail único.
+* Validação e codificação da senha.
+* Consulta do próprio perfil.
+* Alteração de nome.
+* Alteração de username.
+* Alteração de e-mail.
+* Alteração da URL da imagem de perfil.
+* Alteração de senha.
+* Validação da senha atual antes da troca.
+* Exclusão da própria conta.
+* Encerramento da sessão após a exclusão.
+* Remoção automática dos dados relacionados através de `ON DELETE CASCADE`.
+
+---
+
+## Endpoints de usuário
+
+| Método   | Endpoint                 | Descrição                 | Resposta esperada |
+| -------- | ------------------------ | ------------------------- | ----------------- |
+| `POST`   | `/api/usuarios`          | Cadastra um usuário       | `201 Created`     |
+| `GET`    | `/api/usuarios/me`       | Consulta o próprio perfil | `200 OK`          |
+| `PUT`    | `/api/usuarios/me`       | Atualiza o próprio perfil | `200 OK`          |
+| `PUT`    | `/api/usuarios/me/senha` | Altera a própria senha    | `204 No Content`  |
+| `DELETE` | `/api/usuarios/me`       | Exclui a própria conta    | `204 No Content`  |
+
+O cadastro é público.
+
+Os demais endpoints de gerenciamento exigem uma sessão autenticada.
+
+---
+
+# Favoritos
+
+A funcionalidade de Favoritos está concluída no back-end.
+
+Estrutura:
 
 ```text
 favorito
@@ -142,31 +285,31 @@ favorito
 └── service
 ```
 
-### Regras implementadas
+## Regras implementadas
 
-* Adicionar um jogo aos favoritos de um usuário.
-* Listar os favoritos de um usuário.
-* Remover um jogo dos favoritos.
-* Impedir que o mesmo jogo seja favoritado duas vezes pelo mesmo usuário.
-* Retornar erro controlado quando o favorito não existe.
-* Retornar erro controlado quando o usuário não existe.
-* Manter a restrição de unicidade também no banco de dados como garantia de integridade.
+* Adicionar um jogo aos Favoritos.
+* Listar os Favoritos do usuário autenticado.
+* Remover um jogo dos Favoritos.
+* Impedir duplicidade.
+* Retornar erro controlado quando um Favorito não existe.
+* Garantir a unicidade também no banco de dados.
+* Associar todas as operações exclusivamente ao usuário autenticado.
 
-### Endpoints atuais
+## Endpoints
 
-| Método   | Endpoint                                           | Descrição                      | Resposta esperada |
-| -------- | -------------------------------------------------- | ------------------------------ | ----------------- |
-| `POST`   | `/api/usuarios/{usuarioId}/favoritos`              | Adiciona um jogo aos favoritos | `201 Created`     |
-| `GET`    | `/api/usuarios/{usuarioId}/favoritos`              | Lista os favoritos do usuário  | `200 OK`          |
-| `DELETE` | `/api/usuarios/{usuarioId}/favoritos/{rawgGameId}` | Remove um jogo dos favoritos   | `204 No Content`  |
+| Método   | Endpoint                                  | Descrição                      | Resposta esperada |
+| -------- | ----------------------------------------- | ------------------------------ | ----------------- |
+| `POST`   | `/api/usuarios/me/favoritos`              | Adiciona um jogo aos Favoritos | `201 Created`     |
+| `GET`    | `/api/usuarios/me/favoritos`              | Lista os Favoritos             | `200 OK`          |
+| `DELETE` | `/api/usuarios/me/favoritos/{rawgGameId}` | Remove um jogo dos Favoritos   | `204 No Content`  |
 
-Os erros da API são tratados de forma centralizada com `ProblemDetail`. Entre os cenários cobertos estão favorito duplicado (`409 Conflict`) e recursos inexistentes (`404 Not Found`).
+---
 
-> O vínculo entre o `usuarioId` recebido pela rota e o usuário autenticado ainda será reforçado quando a autenticação/autorização da aplicação for implementada.
+# Lista de Desejos
 
-## Lista de Desejos
+A funcionalidade de Lista de Desejos está concluída no back-end.
 
-A funcionalidade de Lista de Desejos foi concluída no back-end e possui atualmente:
+Estrutura:
 
 ```text
 listadesejos
@@ -178,39 +321,32 @@ listadesejos
 └── service
 ```
 
-### Regras implementadas
+## Regras implementadas
 
-* Adicionar um jogo à lista de desejos de um usuário.
-* Listar os jogos da lista de desejos.
-* Remover um jogo da lista de desejos.
-* Impedir que o mesmo jogo seja adicionado duas vezes pelo mesmo usuário.
-* Retornar erro controlado quando o item não existe.
-* Retornar erro controlado quando o usuário não existe.
-* Manter a restrição de unicidade também no banco de dados.
-* Permitir que um mesmo jogo esteja simultaneamente nos Favoritos e na Lista de Desejos.
+* Adicionar um jogo à Lista de Desejos.
+* Listar os jogos da Lista de Desejos.
+* Remover um jogo.
+* Impedir duplicidade.
+* Retornar erro controlado quando um item não existe.
+* Garantir unicidade também no banco.
+* Associar todas as operações ao usuário autenticado.
+* Permitir que o mesmo jogo esteja simultaneamente nos Favoritos e na Lista de Desejos.
 
-### Endpoints atuais
+## Endpoints
 
-| Método   | Endpoint                                               | Descrição                           | Resposta esperada |
-| -------- | ------------------------------------------------------ | ----------------------------------- | ----------------- |
-| `POST`   | `/api/usuarios/{usuarioId}/lista-desejos`              | Adiciona um jogo à lista de desejos | `201 Created`     |
-| `GET`    | `/api/usuarios/{usuarioId}/lista-desejos`              | Lista os jogos da lista de desejos  | `200 OK`          |
-| `DELETE` | `/api/usuarios/{usuarioId}/lista-desejos/{rawgGameId}` | Remove um jogo da lista de desejos  | `204 No Content`  |
+| Método   | Endpoint                                      | Descrição                           | Resposta esperada |
+| -------- | --------------------------------------------- | ----------------------------------- | ----------------- |
+| `POST`   | `/api/usuarios/me/lista-desejos`              | Adiciona um jogo à Lista de Desejos | `201 Created`     |
+| `GET`    | `/api/usuarios/me/lista-desejos`              | Lista os jogos da Lista de Desejos  | `200 OK`          |
+| `DELETE` | `/api/usuarios/me/lista-desejos/{rawgGameId}` | Remove um jogo da Lista de Desejos  | `204 No Content`  |
 
-Os erros da Lista de Desejos também são tratados pelo mecanismo global com `ProblemDetail`.
+---
 
-Entre os cenários cobertos estão:
+# Avaliações
 
-* item duplicado (`409 Conflict`);
-* item inexistente (`404 Not Found`);
-* usuário inexistente (`404 Not Found`);
-* requisição inválida (`400 Bad Request`).
+A funcionalidade de Avaliações está concluída no back-end.
 
-> O vínculo entre o `usuarioId` recebido pela rota e o usuário autenticado ainda será reforçado quando a autenticação/autorização da aplicação for implementada.
-
-## Avaliações
-
-A funcionalidade de Avaliações foi concluída no back-end e possui atualmente:
+Estrutura:
 
 ```text
 avaliacao
@@ -222,32 +358,32 @@ avaliacao
 └── service
 ```
 
-### Regras implementadas
+## Regras implementadas
 
-* Permitir que um usuário atribua uma nota de 1 a 5 a um jogo.
-* Garantir apenas uma avaliação por usuário para cada jogo.
-* Atualizar a avaliação existente quando o usuário atribui uma nova nota ao mesmo jogo.
-* Manter o mesmo registro no banco durante a atualização, sem criar avaliações duplicadas.
-* Consultar a avaliação atribuída pelo usuário a um jogo.
+* Permitir notas entre 1 e 5.
+* Garantir apenas uma avaliação por usuário e jogo.
+* Atualizar a avaliação existente quando o usuário muda sua nota.
+* Manter o mesmo registro durante a atualização.
+* Consultar a avaliação do usuário autenticado.
 * Remover uma avaliação.
 * Calcular a média das avaliações de um jogo.
-* Contar a quantidade de avaliações recebidas por um jogo.
-* Representar jogos sem avaliações com média ausente, em vez de utilizar nota `0`.
-* Rejeitar notas fora do intervalo permitido.
-* Retornar erro controlado quando uma avaliação não existe.
-* Retornar erro controlado quando o usuário não existe.
-* Manter as restrições de unicidade e intervalo de notas também no banco de dados.
+* Contar a quantidade de avaliações.
+* Representar jogos sem avaliações com média ausente.
+* Rejeitar notas inválidas.
+* Associar avaliações privadas exclusivamente ao usuário autenticado.
 
-### Endpoints atuais
+## Endpoints
 
-| Método   | Endpoint                                            | Descrição                                        | Resposta esperada |
-| -------- | --------------------------------------------------- | ------------------------------------------------ | ----------------- |
-| `PUT`    | `/api/usuarios/{usuarioId}/avaliacoes/{rawgGameId}` | Cria ou atualiza a avaliação do usuário          | `200 OK`          |
-| `GET`    | `/api/usuarios/{usuarioId}/avaliacoes/{rawgGameId}` | Consulta a avaliação do usuário para o jogo      | `200 OK`          |
-| `DELETE` | `/api/usuarios/{usuarioId}/avaliacoes/{rawgGameId}` | Remove a avaliação                               | `204 No Content`  |
-| `GET`    | `/api/jogos/{rawgGameId}/avaliacoes/resumo`         | Retorna média e quantidade de avaliações do jogo | `200 OK`          |
+| Método   | Endpoint                                    | Descrição                                 | Resposta esperada |
+| -------- | ------------------------------------------- | ----------------------------------------- | ----------------- |
+| `PUT`    | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Cria ou atualiza uma avaliação            | `200 OK`          |
+| `GET`    | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Consulta a própria avaliação              | `200 OK`          |
+| `DELETE` | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Remove a própria avaliação                | `204 No Content`  |
+| `GET`    | `/api/jogos/{rawgGameId}/avaliacoes/resumo` | Consulta média e quantidade de avaliações | `200 OK`          |
 
-Um resumo de jogo sem avaliações é representado conceitualmente como:
+O resumo das avaliações de um jogo é público.
+
+Um jogo sem avaliações é representado conceitualmente como:
 
 ```json
 {
@@ -257,214 +393,94 @@ Um resumo de jogo sem avaliações é representado conceitualmente como:
 }
 ```
 
-Dessa forma, a ausência de avaliações não é confundida com uma avaliação de nota zero.
+A ausência de avaliações não é confundida com uma avaliação de nota zero.
 
-Os erros relacionados às Avaliações são tratados pelo mecanismo global com `ProblemDetail`.
+---
 
-Entre os cenários cobertos estão:
+# Tratamento de erros
 
-* avaliação inexistente (`404 Not Found`);
-* usuário inexistente (`404 Not Found`);
-* nota inválida (`400 Bad Request`);
-* requisição inválida (`400 Bad Request`).
+A API utiliza tratamento global de exceções com:
 
-> O vínculo entre o `usuarioId` recebido pela rota e o usuário autenticado ainda será reforçado quando a autenticação/autorização da aplicação for implementada.
-
-## Executando o banco com Docker
-
-Crie um arquivo `.env` na raiz do projeto:
-
-```env
-MYSQL_ROOT_PASSWORD=sua_senha_root
-MYSQL_USER=seu_usuario
-MYSQL_PASSWORD=sua_senha
+```java
+@RestControllerAdvice
 ```
 
-> O arquivo `.env` não deve ser versionado.
-
-Suba o MySQL:
-
-```bash
-docker compose up -d
-```
-
-Verifique se o container está em execução:
-
-```bash
-docker ps
-```
-
-Para interromper o container:
-
-```bash
-docker compose stop
-```
-
-Para iniciar novamente:
-
-```bash
-docker compose start
-```
-
-Para remover o container sem apagar o volume:
-
-```bash
-docker compose down
-```
-
-> `docker compose down -v` remove também o volume persistente e apaga os dados do banco.
-
-## Configurando a aplicação
-
-A aplicação carrega o arquivo `.env` localizado na raiz do projeto e reutiliza as credenciais configuradas para o MySQL.
-
-Configure:
-
-```env
-MYSQL_ROOT_PASSWORD=sua_senha_root
-MYSQL_USER=seu_usuario
-MYSQL_PASSWORD=sua_senha
-```
-
-Por padrão, a aplicação utiliza:
+e respostas no padrão:
 
 ```text
-host: localhost
-porta: 3306
-database: gamevault
+ProblemDetail
 ```
 
-Caso seja necessário alterar o host ou a porta utilizados pela aplicação, podem ser definidas as variáveis:
+Entre os cenários tratados estão:
 
-```env
-DB_HOST=localhost
-DB_PORT=3306
-```
+* recurso inexistente — `404 Not Found`;
+* dados de usuário duplicados — `409 Conflict`;
+* Favorito duplicado — `409 Conflict`;
+* item duplicado na Lista de Desejos — `409 Conflict`;
+* senha inválida — `400 Bad Request`;
+* avaliação inválida — `400 Bad Request`;
+* validação de requisição — `400 Bad Request`;
+* acesso sem autenticação — `401 Unauthorized`.
 
-A chave da RAWG será necessária quando a integração com a API for implementada:
+---
 
-```env
-RAWG_API_KEY=sua_chave
-```
+# Estratégia de testes
 
-> O arquivo `.env` contém informações sensíveis e não deve ser versionado.
+O projeto utiliza diferentes níveis de testes.
 
-## Executando os testes
+## Testes de persistência
 
-Com o MySQL do Docker em execução e o arquivo `.env` configurado:
+Validam:
 
-### Windows
+* persistência de usuários;
+* restrições de unicidade;
+* relacionamentos entre usuários e demais entidades;
+* Favoritos duplicados;
+* itens duplicados na Lista de Desejos;
+* avaliações duplicadas;
+* intervalo permitido para notas;
+* consultas e agregações de avaliações.
 
-```powershell
-mvn test
-```
+---
 
-O build deve terminar com:
+## Testes unitários
 
-```text
-BUILD SUCCESS
-```
+Os serviços são testados com JUnit e Mockito.
 
-## Estratégia de testes atual
+Entre as regras validadas estão:
 
-O projeto possui testes em diferentes níveis para validar persistência, regras de negócio, camada HTTP e fluxos completos da aplicação.
+* cadastro de usuário;
+* validação e codificação de senha;
+* atualização de perfil;
+* alteração de senha;
+* exclusão de conta;
+* Favoritos;
+* Lista de Desejos;
+* Avaliações;
+* cenários de erro.
 
-### Persistência
+---
 
-Testes de integração dos repositories validam:
+## Testes MVC
 
-* persistência e consulta de usuários;
-* relacionamento entre favoritos e usuários;
-* bloqueio de favoritos duplicados;
-* relacionamento entre wishlist e usuários;
-* bloqueio de itens duplicados na wishlist;
-* persistência de avaliações;
-* bloqueio de avaliações duplicadas;
-* rejeição de notas abaixo de 1;
-* rejeição de notas acima de 5;
-* consulta de avaliação por usuário e jogo;
-* contagem de avaliações de um jogo;
-* cálculo da média das avaliações;
-* ausência de média quando um jogo ainda não possui avaliações.
-
-### Regras de negócio de Favoritos
-
-Testes unitários com Mockito validam o `FavoritoService`, incluindo:
-
-* adição de favorito;
-* prevenção de duplicidade;
-* usuário inexistente;
-* remoção de favorito;
-* tentativa de remover favorito inexistente;
-* listagem dos favoritos do usuário.
-
-### Camada HTTP de Favoritos
-
-Testes MVC com `MockMvc` validam:
-
-* `POST` de favorito;
-* `GET` da lista de favoritos;
-* `DELETE` de favorito;
-* retorno `409 Conflict` para duplicidade;
-* retorno `404 Not Found` para recurso inexistente;
-* retorno `400 Bad Request` para requisição inválida;
-* comportamento de Spring Security e CSRF nos testes.
-
-### Fluxo ponta a ponta de Favoritos
-
-O fluxo de Favoritos possui teste de integração carregando o contexto completo do Spring e utilizando o MySQL real do ambiente de desenvolvimento.
-
-O teste percorre:
-
-```text
-HTTP
- ↓
-Spring Security
- ↓
-Controller
- ↓
-Service
- ↓
-Repository
- ↓
-MySQL
-```
+Os controllers são testados com `MockMvc`.
 
 São validados:
 
-* adição de favorito;
-* persistência no banco;
-* listagem dos favoritos;
-* remoção;
-* prevenção de duplicidade;
-* tratamento de usuário inexistente.
+* status HTTP;
+* DTOs;
+* validação de requisições;
+* tratamento de exceções;
+* autenticação;
+* autorização;
+* CSRF;
+* utilização do usuário autenticado.
 
-### Regras de negócio da Lista de Desejos
+---
 
-Testes unitários com Mockito validam o `ListaDesejosService`, incluindo:
+## Testes de integração
 
-* adição de jogo à lista de desejos;
-* prevenção de duplicidade;
-* usuário inexistente;
-* remoção de item;
-* tentativa de remover item inexistente;
-* listagem dos jogos da lista de desejos.
-
-### Camada HTTP da Lista de Desejos
-
-Testes MVC com `MockMvc` validam:
-
-* `POST` de item na lista de desejos;
-* `GET` da lista de desejos;
-* `DELETE` de item;
-* retorno `409 Conflict` para duplicidade;
-* retorno `404 Not Found` para recurso inexistente;
-* retorno `400 Bad Request` para requisição inválida;
-* comportamento de Spring Security e CSRF nos testes.
-
-### Fluxo ponta a ponta da Lista de Desejos
-
-A Lista de Desejos também possui teste de integração carregando o contexto completo do Spring e utilizando o MySQL real do ambiente de desenvolvimento.
+Os fluxos de integração carregam o contexto completo do Spring e utilizam o MySQL real do ambiente de desenvolvimento.
 
 O fluxo validado percorre:
 
@@ -482,162 +498,265 @@ Repository
 MySQL
 ```
 
-São validados:
+Entre os fluxos validados estão:
 
-* adição de jogo à lista de desejos;
-* persistência no banco;
+### Autenticação
+
+* cadastro público;
+* login;
+* criação da sessão;
+* rejeição de credenciais inválidas;
+* proteção de endpoints privados;
+* logout;
+* invalidação da sessão;
+* CSRF.
+
+### Perfil
+
+* consulta do próprio perfil;
+* atualização do perfil;
+* persistência das alterações;
+* proteção contra acesso não autenticado.
+
+### Alteração de senha
+
+* validação da senha atual;
+* geração de novo hash;
+* rejeição da senha antiga após a alteração;
+* autenticação com a nova senha.
+
+### Exclusão de conta
+
+* remoção do usuário;
+* remoção dos Favoritos;
+* remoção da Lista de Desejos;
+* remoção das Avaliações;
+* validação real do `ON DELETE CASCADE`;
+* invalidação da sessão após a exclusão.
+
+### Favoritos
+
+* adição;
+* persistência;
 * listagem;
 * remoção;
 * prevenção de duplicidade;
-* tratamento de usuário inexistente;
-* coexistência do mesmo jogo nos Favoritos e na Lista de Desejos.
+* associação ao usuário autenticado.
 
-A validação da coexistência garante uma regra importante do domínio: adicionar um jogo aos Favoritos não impede que o mesmo jogo também pertença à Lista de Desejos do usuário.
+### Lista de Desejos
 
-### Regras de negócio de Avaliações
+* adição;
+* persistência;
+* listagem;
+* remoção;
+* prevenção de duplicidade;
+* coexistência do mesmo jogo nos Favoritos e na Lista de Desejos;
+* associação ao usuário autenticado.
 
-Testes unitários com Mockito validam o `AvaliacaoService`, incluindo:
+### Avaliações
 
-* criação de uma avaliação;
-* atualização da nota de uma avaliação existente;
-* validação de usuário inexistente;
-* rejeição de nota abaixo do mínimo;
-* rejeição de nota acima do máximo;
-* rejeição de nota nula;
-* remoção de avaliação;
-* tentativa de remover avaliação inexistente;
-* consulta da avaliação do usuário;
-* cálculo da média das avaliações;
-* contagem das avaliações de um jogo.
+* criação;
+* persistência;
+* atualização da nota;
+* manutenção do mesmo registro;
+* consulta;
+* média;
+* quantidade;
+* remoção;
+* associação ao usuário autenticado.
 
-### Camada HTTP de Avaliações
+A suíte completa é executada com:
 
-Testes MVC com `MockMvc` validam:
-
-* criação ou atualização de avaliação com `PUT`;
-* consulta da avaliação do usuário;
-* remoção da avaliação;
-* retorno `404 Not Found` para avaliação inexistente;
-* rejeição de notas abaixo de 1;
-* rejeição de notas acima de 5;
-* rejeição de requisição sem nota;
-* retorno do resumo das avaliações;
-* retorno de média ausente para jogos sem avaliações;
-* comportamento de Spring Security e CSRF nos testes.
-
-### Fluxo ponta a ponta de Avaliações
-
-A funcionalidade de Avaliações possui teste de integração carregando o contexto completo do Spring e utilizando o MySQL real do ambiente de desenvolvimento.
-
-O fluxo percorre:
-
-```text
-HTTP
- ↓
-Spring Security
- ↓
-Controller
- ↓
-Service
- ↓
-Repository
- ↓
-MySQL
+```powershell
+mvn test
 ```
 
-São validados:
+e atualmente deve finalizar com:
 
-* estado de um jogo sem avaliações;
-* criação de avaliação;
-* persistência no banco;
-* atualização da nota;
-* manutenção do mesmo registro após a atualização;
-* garantia de apenas uma avaliação por usuário e jogo;
-* consulta da avaliação do usuário;
-* cálculo da média das avaliações;
-* contagem das avaliações;
-* remoção da avaliação;
-* retorno ao estado sem avaliações após a remoção;
-* tratamento de usuário inexistente.
+```text
+BUILD SUCCESS
+```
 
-A validação da atualização garante uma regra central do domínio: ao alterar a nota atribuída a um jogo, a avaliação existente é atualizada em vez de uma segunda linha ser criada.
+---
 
-Os testes de persistência e integração utilizam transações quando aplicável para evitar resíduos de dados entre execuções.
+# Executando o banco com Docker
 
-## Estado atual do desenvolvimento
+Crie um arquivo `.env` na raiz do projeto:
 
-### Concluído
+```env
+MYSQL_ROOT_PASSWORD=sua_senha_root
+MYSQL_USER=seu_usuario
+MYSQL_PASSWORD=sua_senha
+```
 
-* Configuração inicial do projeto Spring Boot.
-* Java 21 e Maven.
-* MySQL 8.4 em Docker.
+> O arquivo `.env` não deve ser versionado.
+
+Suba o banco:
+
+```bash
+docker compose up -d
+```
+
+Verifique:
+
+```bash
+docker ps
+```
+
+Para interromper:
+
+```bash
+docker compose stop
+```
+
+Para iniciar novamente:
+
+```bash
+docker compose start
+```
+
+Para remover os containers sem apagar os volumes:
+
+```bash
+docker compose down
+```
+
+> `docker compose down -v` também remove os volumes e apaga os dados armazenados.
+
+---
+
+# Configuração da aplicação
+
+A aplicação utiliza as credenciais definidas no `.env`.
+
+Exemplo:
+
+```env
+MYSQL_ROOT_PASSWORD=sua_senha_root
+MYSQL_USER=seu_usuario
+MYSQL_PASSWORD=sua_senha
+```
+
+Por padrão:
+
+```text
+host: localhost
+porta: 3306
+database: gamevault
+```
+
+Também podem ser configuradas:
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+```
+
+A integração com a RAWG utilizará:
+
+```env
+RAWG_API_KEY=sua_chave
+```
+
+> Nunca versione o arquivo `.env` nem credenciais reais.
+
+---
+
+# Estado atual do desenvolvimento
+
+## Concluído
+
+### Infraestrutura
+
+* Configuração inicial do Spring Boot.
+* Java 21.
+* Maven.
+* MySQL 8.4.
+* Docker.
 * Docker Compose.
 * Flyway.
 * Migration inicial.
-* Entidades JPA:
-
-  * `Usuario`
-  * `Favorito`
-  * `ItemListaDesejos`
-  * `Avaliacao`
+* Entidades JPA.
 * Repositories Spring Data JPA.
-* Testes de integração da camada de persistência.
-* Padronização dos módulos e classes atuais do domínio.
+* Tratamento global de exceções.
 
-#### Favoritos
+### Segurança
 
-* Regra de negócio de Favoritos.
-* DTOs de Favoritos.
-* API REST de Favoritos.
-* Tratamento global das exceções utilizadas pela funcionalidade.
-* Testes unitários do `FavoritoService`.
-* Testes MVC do `FavoritoController`.
-* Teste de integração do fluxo completo de Favoritos.
+* Spring Security.
+* Autenticação por sessão.
+* Login por e-mail e senha.
+* Logout.
+* `UsuarioPrincipal`.
+* Proteção dos endpoints privados.
+* Utilização do usuário autenticado nas regras privadas.
+* Proteção CSRF.
+* Endpoint para obtenção do token CSRF.
 
-#### Lista de Desejos
+### Usuários
 
-* Regra de negócio da Lista de Desejos.
-* DTOs da Lista de Desejos.
-* API REST da Lista de Desejos.
-* Tratamento global das exceções da Lista de Desejos.
-* Testes unitários do `ListaDesejosService`.
-* Testes MVC do `ListaDesejosController`.
-* Teste de integração do fluxo completo da Lista de Desejos.
-* Validação da independência entre Favoritos e Lista de Desejos.
-* Validação da coexistência do mesmo jogo nas duas coleções.
+* Cadastro.
+* Validação de username e e-mail únicos.
+* Codificação de senha.
+* Consulta do próprio perfil.
+* Atualização do perfil.
+* Alteração de senha.
+* Validação da senha atual.
+* Exclusão da conta.
+* Invalidação da sessão após exclusão.
+* Remoção em cascata dos dados relacionados.
 
-#### Avaliações
+### Favoritos
 
-* Consultas de avaliações por usuário e jogo.
-* Consulta da média de avaliações.
-* Contagem de avaliações por jogo.
-* Regra de negócio de Avaliações.
-* Atualização da avaliação existente sem duplicidade.
-* Validação de notas entre 1 e 5.
-* DTOs de Avaliações.
-* API REST de Avaliações.
-* Endpoint de resumo de avaliações por jogo.
-* Tratamento global das exceções utilizadas pela funcionalidade.
-* Testes unitários do `AvaliacaoService`.
-* Testes MVC da API de Avaliações.
-* Teste de integração do fluxo completo de Avaliações.
-* Validação ponta a ponta da atualização de nota mantendo uma única avaliação.
+* Adição.
+* Listagem.
+* Remoção.
+* Prevenção de duplicidade.
+* Associação ao usuário autenticado.
+* Testes unitários, MVC e integração.
 
-#### Validação
+### Lista de Desejos
 
-* Suíte completa de testes validada com Maven.
+* Adição.
+* Listagem.
+* Remoção.
+* Prevenção de duplicidade.
+* Associação ao usuário autenticado.
+* Coexistência com Favoritos.
+* Testes unitários, MVC e integração.
+
+### Avaliações
+
+* Criação e atualização.
+* Consulta.
+* Remoção.
+* Média.
+* Quantidade.
+* Notas entre 1 e 5.
+* Uma avaliação por usuário e jogo.
+* Associação ao usuário autenticado.
+* Endpoint público de resumo.
+* Testes unitários, MVC e integração.
+
+### Validação
+
+* Fluxos principais validados ponta a ponta.
+* Suíte completa validada com Maven.
 * Build finalizado com `BUILD SUCCESS`.
-* Favoritos validados ponta a ponta.
-* Lista de Desejos validada ponta a ponta.
-* Avaliações validadas ponta a ponta.
 
-### Próximos passos
+---
 
-* Cadastro e gerenciamento de usuário.
-* Autenticação e autorização com Spring Security.
-* Proteção dos endpoints utilizando o usuário autenticado.
-* Integração com a API RAWG.
+# Próximos passos
 
-## Autor
+* Implementar a integração com a API RAWG.
+* Implementar busca de jogos.
+* Implementar listagem de jogos populares.
+* Implementar lançamentos recentes.
+* Implementar jogos mais bem avaliados.
+* Integrar os dados da RAWG com Favoritos, Lista de Desejos e Avaliações.
+* Preparar posteriormente a camada de front-end.
+
+---
+
+# Autor
 
 **Isaque Costa da Cunha**
