@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 @WebMvcTest(UsuarioController.class)
 @Import(TratadorGlobalExcecoes.class)
@@ -374,6 +375,280 @@ class UsuarioControllerTest {
 
         verify(usuarioService)
                 .buscarPorId(1L);
+    }
+
+    @Test
+    void deveAtualizarPerfilDoUsuarioAutenticado()
+            throws Exception {
+
+        Usuario usuario = mock(Usuario.class);
+
+        when(usuario.getId())
+                .thenReturn(1L);
+
+        when(usuario.getName())
+                .thenReturn("Isaque Costa da Cunha");
+
+        when(usuario.getUsername())
+                .thenReturn("isaque-collab");
+
+        when(usuario.getEmail())
+                .thenReturn("isaque@gamevault.test");
+
+        when(usuario.getProfileImageUrl())
+                .thenReturn(
+                        "https://exemplo.com/perfil.jpg"
+                );
+
+        when(
+                usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque Costa da Cunha",
+                        "isaque-collab",
+                        "isaque@gamevault.test",
+                        "https://exemplo.com/perfil.jpg"
+                )
+        ).thenReturn(usuario);
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Isaque Costa da Cunha",
+                                      "username": "isaque-collab",
+                                      "email": "isaque@gamevault.test",
+                                      "imagemPerfil": "https://exemplo.com/perfil.jpg"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.id")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.nome")
+                                .value(
+                                        "Isaque Costa da Cunha"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.username")
+                                .value("isaque-collab")
+                )
+                .andExpect(
+                        jsonPath("$.email")
+                                .value(
+                                        "isaque@gamevault.test"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        "https://exemplo.com/perfil.jpg"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.senha")
+                                .doesNotExist()
+                )
+                .andExpect(
+                        jsonPath("$.password")
+                                .doesNotExist()
+                );
+
+        verify(usuarioService)
+                .atualizarPerfil(
+                        1L,
+                        "Isaque Costa da Cunha",
+                        "isaque-collab",
+                        "isaque@gamevault.test",
+                        "https://exemplo.com/perfil.jpg"
+                );
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComNomeVazio()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "",
+                                      "username": "isaque",
+                                      "email": "isaque@gamevault.test",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+
+        verifyNoInteractions(
+                usuarioService
+        );
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComEmailInvalido()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Isaque Costa",
+                                      "username": "isaque",
+                                      "email": "email-invalido",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+
+        verifyNoInteractions(
+                usuarioService
+        );
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComUsernameVazio()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Isaque Costa",
+                                      "username": "",
+                                      "email": "isaque@gamevault.test",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isBadRequest()
+                );
+
+        verifyNoInteractions(
+                usuarioService
+        );
+    }
+
+    @Test
+    void deveRetornarConflitoAoAtualizarParaUsernameJaCadastrado()
+            throws Exception {
+
+        when(
+                usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque Costa",
+                        "username_existente",
+                        "isaque@gamevault.test",
+                        null
+                )
+        ).thenThrow(
+                new UsernameJaCadastradoException(
+                        "username_existente"
+                )
+        );
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Isaque Costa",
+                                      "username": "username_existente",
+                                      "email": "isaque@gamevault.test",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isConflict()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Dados de usuário já cadastrados"
+                                )
+                );
+    }
+
+    @Test
+    void deveRetornarConflitoAoAtualizarParaEmailJaCadastrado()
+            throws Exception {
+
+        when(
+                usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque Costa",
+                        "isaque",
+                        "email.existente@gamevault.test",
+                        null
+                )
+        ).thenThrow(
+                new EmailJaCadastradoException(
+                        "email.existente@gamevault.test"
+                )
+        );
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Isaque Costa",
+                                      "username": "isaque",
+                                      "email": "email.existente@gamevault.test",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isConflict()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Dados de usuário já cadastrados"
+                                )
+                );
     }
 
     private UsuarioPrincipal usuarioPrincipal() {

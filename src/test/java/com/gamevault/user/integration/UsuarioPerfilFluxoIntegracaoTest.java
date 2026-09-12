@@ -19,6 +19,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -139,5 +142,151 @@ class UsuarioPerfilFluxoIntegracaoTest {
         assertNotNull(sessao);
 
         return sessao;
+    }
+
+    @Test
+    void deveAtualizarPerfilDoUsuarioAutenticadoEPersistirAlteracoes()
+            throws Exception {
+
+        MockHttpSession sessao =
+                autenticar();
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .session(sessao)
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Usuário Perfil Atualizado",
+                                      "username": "usuario_perfil_atualizado",
+                                      "email": "usuario.perfil.atualizado@gamevault.test",
+                                      "imagemPerfil": "https://exemplo.com/perfil.jpg"
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.nome")
+                                .value(
+                                        "Usuário Perfil Atualizado"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.username")
+                                .value(
+                                        "usuario_perfil_atualizado"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.email")
+                                .value(
+                                        "usuario.perfil.atualizado@gamevault.test"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        "https://exemplo.com/perfil.jpg"
+                                )
+                );
+
+        Usuario usuarioAtualizado =
+                usuarioRepository
+                        .findByEmail(
+                                "usuario.perfil.atualizado@gamevault.test"
+                        )
+                        .orElseThrow();
+
+        assertAll(
+                () -> assertEquals(
+                        "Usuário Perfil Atualizado",
+                        usuarioAtualizado.getName()
+                ),
+                () -> assertEquals(
+                        "usuario_perfil_atualizado",
+                        usuarioAtualizado.getUsername()
+                ),
+                () -> assertEquals(
+                        "https://exemplo.com/perfil.jpg",
+                        usuarioAtualizado.getProfileImageUrl()
+                )
+        );
+    }
+
+    @Test
+    void deveBloquearAtualizacaoDePerfilSemAutenticacao()
+            throws Exception {
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Usuário",
+                                      "username": "usuario",
+                                      "email": "usuario@gamevault.test",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+    }
+
+    @Test
+    void deveImpedirAtualizacaoParaEmailDeOutroUsuario()
+            throws Exception {
+
+        Usuario outroUsuario = new Usuario();
+        outroUsuario.setName("Outro Usuário");
+        outroUsuario.setUsername("outro_usuario_perfil");
+        outroUsuario.setEmail(
+                "outro.perfil@gamevault.test"
+        );
+        outroUsuario.setPassword(
+                passwordEncoder.encode("senha123")
+        );
+
+        usuarioRepository.saveAndFlush(
+                outroUsuario
+        );
+
+        MockHttpSession sessao =
+                autenticar();
+
+        mockMvc.perform(
+                        put("/api/usuarios/me")
+                                .session(sessao)
+                                .with(csrf())
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content("""
+                                    {
+                                      "nome": "Usuário Perfil",
+                                      "username": "usuario_perfil",
+                                      "email": "outro.perfil@gamevault.test",
+                                      "imagemPerfil": null
+                                    }
+                                    """)
+                )
+                .andExpect(
+                        status().isConflict()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Dados de usuário já cadastrados"
+                                )
+                );
     }
 }

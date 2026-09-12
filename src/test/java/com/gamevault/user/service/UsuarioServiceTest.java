@@ -1,7 +1,11 @@
 package com.gamevault.user.service;
 
 import com.gamevault.user.entity.Usuario;
-import com.gamevault.user.exception.*;
+import com.gamevault.user.exception.EmailJaCadastradoException;
+import com.gamevault.user.exception.SenhaInvalidaException;
+import com.gamevault.user.exception.SenhasNaoCoincidemException;
+import com.gamevault.user.exception.UsernameJaCadastradoException;
+import com.gamevault.user.exception.UsuarioNaoEncontradoException;
 import com.gamevault.user.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,35 +41,54 @@ class UsuarioServiceTest {
 
     @Test
     void deveCadastrarUsuarioComSenhaCodificada() {
+
         String senha = "senha123";
         String senhaCodificada = "{bcrypt}hash-teste";
 
-        when(usuarioRepository.existsByUsername("isaque"))
-                .thenReturn(false);
+        when(
+                usuarioRepository.existsByUsername(
+                        "isaque"
+                )
+        ).thenReturn(false);
 
-        when(usuarioRepository.existsByEmail("isaque@gamevault.test"))
-                .thenReturn(false);
+        when(
+                usuarioRepository.existsByEmail(
+                        "isaque@gamevault.test"
+                )
+        ).thenReturn(false);
 
-        when(passwordEncoder.encode(senha))
-                .thenReturn(senhaCodificada);
+        when(
+                passwordEncoder.encode(senha)
+        ).thenReturn(senhaCodificada);
 
-        when(usuarioRepository.save(any(Usuario.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        Usuario resultado = usuarioService.cadastrar(
-                "Isaque",
-                "isaque",
-                "isaque@gamevault.test",
-                senha,
-                senha
+        when(
+                usuarioRepository.save(
+                        any(Usuario.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
         );
 
+        Usuario resultado =
+                usuarioService.cadastrar(
+                        "Isaque",
+                        "isaque",
+                        "isaque@gamevault.test",
+                        senha,
+                        senha
+                );
+
         ArgumentCaptor<Usuario> captor =
-                ArgumentCaptor.forClass(Usuario.class);
+                ArgumentCaptor.forClass(
+                        Usuario.class
+                );
 
-        verify(usuarioRepository).save(captor.capture());
+        verify(usuarioRepository)
+                .save(captor.capture());
 
-        Usuario usuarioPersistido = captor.getValue();
+        Usuario usuarioPersistido =
+                captor.getValue();
 
         assertAll(
                 () -> assertEquals(
@@ -90,11 +113,13 @@ class UsuarioServiceTest {
                 )
         );
 
-        verify(passwordEncoder).encode(senha);
+        verify(passwordEncoder)
+                .encode(senha);
     }
 
     @Test
     void deveRejeitarSenhaComMenosDeOitoCaracteres() {
+
         assertThrows(
                 SenhaInvalidaException.class,
                 () -> usuarioService.cadastrar(
@@ -114,6 +139,7 @@ class UsuarioServiceTest {
 
     @Test
     void deveRejeitarSenhaNula() {
+
         assertThrows(
                 SenhaInvalidaException.class,
                 () -> usuarioService.cadastrar(
@@ -133,6 +159,7 @@ class UsuarioServiceTest {
 
     @Test
     void deveRejeitarQuandoSenhasNaoCoincidem() {
+
         assertThrows(
                 SenhasNaoCoincidemException.class,
                 () -> usuarioService.cadastrar(
@@ -152,8 +179,12 @@ class UsuarioServiceTest {
 
     @Test
     void deveRejeitarUsernameJaCadastrado() {
-        when(usuarioRepository.existsByUsername("isaque"))
-                .thenReturn(true);
+
+        when(
+                usuarioRepository.existsByUsername(
+                        "isaque"
+                )
+        ).thenReturn(true);
 
         assertThrows(
                 UsernameJaCadastradoException.class,
@@ -179,16 +210,25 @@ class UsuarioServiceTest {
                 never()
         ).save(any());
 
-        verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(
+                passwordEncoder
+        );
     }
 
     @Test
     void deveRejeitarEmailJaCadastrado() {
-        when(usuarioRepository.existsByUsername("isaque"))
-                .thenReturn(false);
 
-        when(usuarioRepository.existsByEmail("isaque@gamevault.test"))
-                .thenReturn(true);
+        when(
+                usuarioRepository.existsByUsername(
+                        "isaque"
+                )
+        ).thenReturn(false);
+
+        when(
+                usuarioRepository.existsByEmail(
+                        "isaque@gamevault.test"
+                )
+        ).thenReturn(true);
 
         assertThrows(
                 EmailJaCadastradoException.class,
@@ -202,14 +242,18 @@ class UsuarioServiceTest {
         );
 
         verify(usuarioRepository)
-                .existsByEmail("isaque@gamevault.test");
+                .existsByEmail(
+                        "isaque@gamevault.test"
+                );
 
         verify(
                 usuarioRepository,
                 never()
         ).save(any());
 
-        verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(
+                passwordEncoder
+        );
     }
 
     @Test
@@ -218,8 +262,11 @@ class UsuarioServiceTest {
         Usuario usuario = new Usuario();
         usuario.setName("Isaque");
 
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
 
         Usuario resultado =
                 usuarioService.buscarPorId(1L);
@@ -236,8 +283,11 @@ class UsuarioServiceTest {
     @Test
     void deveRetornarErroQuandoUsuarioNaoForEncontradoPorId() {
 
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.empty());
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 UsuarioNaoEncontradoException.class,
@@ -246,5 +296,328 @@ class UsuarioServiceTest {
 
         verify(usuarioRepository)
                 .findById(1L);
+    }
+
+    @Test
+    void deveAtualizarPerfilDoUsuario() {
+
+        Usuario usuario = new Usuario();
+        usuario.setName("Nome Antigo");
+        usuario.setUsername("username_antigo");
+        usuario.setEmail(
+                "antigo@gamevault.test"
+        );
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                usuarioRepository
+                        .existsByUsernameAndIdNot(
+                                "novo_username",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        when(
+                usuarioRepository
+                        .existsByEmailAndIdNot(
+                                "novo@gamevault.test",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        Usuario resultado =
+                usuarioService.atualizarPerfil(
+                        1L,
+                        "Novo Nome",
+                        "novo_username",
+                        "novo@gamevault.test",
+                        "https://exemplo.com/foto.jpg"
+                );
+
+        assertAll(
+                () -> assertSame(
+                        usuario,
+                        resultado
+                ),
+                () -> assertEquals(
+                        "Novo Nome",
+                        resultado.getName()
+                ),
+                () -> assertEquals(
+                        "novo_username",
+                        resultado.getUsername()
+                ),
+                () -> assertEquals(
+                        "novo@gamevault.test",
+                        resultado.getEmail()
+                ),
+                () -> assertEquals(
+                        "https://exemplo.com/foto.jpg",
+                        resultado.getProfileImageUrl()
+                )
+        );
+
+        verify(usuarioRepository)
+                .findById(1L);
+
+        verify(usuarioRepository)
+                .existsByUsernameAndIdNot(
+                        "novo_username",
+                        1L
+                );
+
+        verify(usuarioRepository)
+                .existsByEmailAndIdNot(
+                        "novo@gamevault.test",
+                        1L
+                );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void devePermitirManterUsernameEEmailDoProprioUsuario() {
+
+        Usuario usuario = new Usuario();
+        usuario.setName("Isaque");
+        usuario.setUsername("isaque");
+        usuario.setEmail(
+                "isaque@gamevault.test"
+        );
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                usuarioRepository
+                        .existsByUsernameAndIdNot(
+                                "isaque",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        when(
+                usuarioRepository
+                        .existsByEmailAndIdNot(
+                                "isaque@gamevault.test",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        Usuario resultado =
+                usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque Costa",
+                        "isaque",
+                        "isaque@gamevault.test",
+                        null
+                );
+
+        assertAll(
+                () -> assertEquals(
+                        "Isaque Costa",
+                        resultado.getName()
+                ),
+                () -> assertEquals(
+                        "isaque",
+                        resultado.getUsername()
+                ),
+                () -> assertEquals(
+                        "isaque@gamevault.test",
+                        resultado.getEmail()
+                ),
+                () -> assertNull(
+                        resultado.getProfileImageUrl()
+                )
+        );
+
+        verify(usuarioRepository)
+                .existsByUsernameAndIdNot(
+                        "isaque",
+                        1L
+                );
+
+        verify(usuarioRepository)
+                .existsByEmailAndIdNot(
+                        "isaque@gamevault.test",
+                        1L
+                );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void deveRejeitarUsernamePertencenteAOutroUsuario() {
+
+        Usuario usuario = new Usuario();
+        usuario.setName("Isaque");
+        usuario.setUsername("isaque");
+        usuario.setEmail(
+                "isaque@gamevault.test"
+        );
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                usuarioRepository
+                        .existsByUsernameAndIdNot(
+                                "username_existente",
+                                1L
+                        )
+        ).thenReturn(true);
+
+        assertThrows(
+                UsernameJaCadastradoException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque",
+                        "username_existente",
+                        "isaque@gamevault.test",
+                        null
+                )
+        );
+
+        verify(usuarioRepository)
+                .existsByUsernameAndIdNot(
+                        "username_existente",
+                        1L
+                );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).existsByEmailAndIdNot(
+                anyString(),
+                anyLong()
+        );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void deveRejeitarEmailPertencenteAOutroUsuario() {
+
+        Usuario usuario = new Usuario();
+        usuario.setName("Isaque");
+        usuario.setUsername("isaque");
+        usuario.setEmail(
+                "isaque@gamevault.test"
+        );
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                usuarioRepository
+                        .existsByUsernameAndIdNot(
+                                "isaque",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        when(
+                usuarioRepository
+                        .existsByEmailAndIdNot(
+                                "email.existente@gamevault.test",
+                                1L
+                        )
+        ).thenReturn(true);
+
+        assertThrows(
+                EmailJaCadastradoException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque",
+                        "isaque",
+                        "email.existente@gamevault.test",
+                        null
+                )
+        );
+
+        verify(usuarioRepository)
+                .existsByUsernameAndIdNot(
+                        "isaque",
+                        1L
+                );
+
+        verify(usuarioRepository)
+                .existsByEmailAndIdNot(
+                        "email.existente@gamevault.test",
+                        1L
+                );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void deveRetornarErroAoAtualizarPerfilDeUsuarioInexistente() {
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        assertThrows(
+                UsuarioNaoEncontradoException.class,
+                () -> usuarioService.atualizarPerfil(
+                        1L,
+                        "Novo Nome",
+                        "novo_username",
+                        "novo@gamevault.test",
+                        null
+                )
+        );
+
+        verify(usuarioRepository)
+                .findById(1L);
+
+        verify(
+                usuarioRepository,
+                never()
+        ).existsByUsernameAndIdNot(
+                anyString(),
+                anyLong()
+        );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).existsByEmailAndIdNot(
+                anyString(),
+                anyLong()
+        );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
     }
 }
