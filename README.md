@@ -5,8 +5,10 @@ O **GameVault** é uma aplicação web para descoberta, organização e avaliaç
 O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de jogos e mantém no banco de dados apenas os dados próprios da aplicação, como usuários, favoritos, lista de desejos e avaliações.
 
 > **Status:** em desenvolvimento
-> **Etapa atual:** desenvolvimento Back-end — autenticação, gerenciamento de usuários, Favoritos, Lista de Desejos e Avaliações concluídos e validados.
-> **Próximo foco:** integração com a API RAWG.
+>
+> **Etapa atual:** desenvolvimento Back-end — integração inicial com a API RAWG concluída e validada.
+>
+> **Próximo foco:** implementação da busca de jogos utilizando a RAWG.
 
 ---
 
@@ -37,6 +39,7 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 * Bean Validation
 * Spring Security
 * Maven
+* Spring RestClient
 
 ## Banco de dados e infraestrutura
 
@@ -67,6 +70,11 @@ com.gamevault
 ├── avaliacao
 ├── favorito
 ├── listadesejos
+├── rawg
+│   ├── client
+│   ├── config
+│   ├── dto
+│   └── exception
 ├── shared
 └── user
 ```
@@ -87,7 +95,7 @@ Entity
 
 As regras de negócio permanecem concentradas na camada de serviço, enquanto os controllers são responsáveis pela comunicação HTTP.
 
-A integração com a RAWG será isolada em um cliente próprio para evitar acoplamento direto entre a API externa e as demais funcionalidades do sistema.
+A integração com a RAWG está isolada no módulo `rawg`, evitando acoplamento direto entre a API externa e as demais funcionalidades do sistema.
 
 ---
 
@@ -396,6 +404,65 @@ Um jogo sem avaliações é representado conceitualmente como:
 A ausência de avaliações não é confundida com uma avaliação de nota zero.
 
 ---
+# Integração com a API RAWG
+
+A integração inicial com a RAWG utiliza o cliente HTTP síncrono `RestClient`, compatível com a arquitetura imperativa do projeto baseada em Spring MVC e Spring Data JPA.
+
+A estrutura implementada é:
+
+```text
+rawg
+├── client
+│   └── RawgClient
+├── config
+│   ├── RawgConfig
+│   └── RawgProperties
+├── dto
+│   └── RawgJogoDetalhesResposta
+└── exception
+    ├── JogoRawgNaoEncontradoException
+    ├── RawgApiKeyNaoConfiguradaException
+    └── RawgIntegracaoException
+```
+O `RawgClient` realiza atualmente a consulta de um jogo pelo ID da RAWG:
+
+```text
+GET /games/{id}
+```
+
+A resposta externa é mapeada para os seguintes dados:
+
+| Campo da RAWG      | Campo no GameVault |
+| ------------------ | ------------------ |
+| `id`               | `id`               |
+| `name`             | `nome`             |
+| `released`         | `dataLancamento`   |
+| `background_image` | `imagemFundo`      |
+| `rating`           | `notaRawg`         |
+| `ratings_count`    | `totalAvaliacoes`  |
+| `metacritic`       | `metacritic`       |
+
+Campos adicionais retornados pela RAWG são ignorados durante a desserialização.
+
+A configuração utiliza:
+
+* URL base externa configurável;
+* chave da RAWG obtida pela variável `RAWG_API_KEY`;
+* timeout de conexão de 3 segundos;
+* timeout de leitura de 10 segundos;
+* validação da presença da chave antes da requisição.
+
+O cliente trata explicitamente:
+
+* jogo não encontrado na RAWG;
+* chave da API ausente;
+* erros HTTP retornados pela RAWG;
+* resposta sem corpo;
+* falhas de comunicação com o serviço externo.
+
+Essa integração ainda não possui um endpoint público próprio no GameVault. Atualmente, ela representa a infraestrutura necessária para as próximas funcionalidades de consulta e busca de jogos.
+
+---
 
 # Tratamento de erros
 
@@ -475,6 +542,24 @@ São validados:
 * autorização;
 * CSRF;
 * utilização do usuário autenticado.
+
+---
+
+## Testes do cliente RAWG
+
+O cliente HTTP é validado com `MockRestServiceServer`, sem realizar chamadas reais à API externa durante os testes.
+
+Os cenários cobertos incluem:
+
+* requisição correta pelo ID do jogo;
+* envio da chave como parâmetro;
+* mapeamento da resposta JSON;
+* campos externos desconhecidos;
+* jogo não encontrado;
+* erros HTTP;
+* resposta sem corpo;
+* chave da API não configurada;
+* falha de comunicação.
 
 ---
 
@@ -652,7 +737,7 @@ DB_HOST=localhost
 DB_PORT=3306
 ```
 
-A integração com a RAWG utilizará:
+A integração com a RAWG utiliza:
 
 ```env
 RAWG_API_KEY=sua_chave
@@ -737,6 +822,17 @@ RAWG_API_KEY=sua_chave
 * Endpoint público de resumo.
 * Testes unitários, MVC e integração.
 
+### Integração RAWG
+
+* Cliente HTTP baseado em `RestClient`.
+* Configuração externa da URL base e da API key.
+* Timeouts de conexão e leitura.
+* Consulta de jogo pelo ID da RAWG.
+* Mapeamento da resposta externa.
+* Tratamento de falhas HTTP e de comunicação.
+* Validação de chave ausente e resposta sem corpo.
+* Testes isolados com `MockRestServiceServer`.
+
 ### Validação
 
 * Fluxos principais validados ponta a ponta.
@@ -747,8 +843,7 @@ RAWG_API_KEY=sua_chave
 
 # Próximos passos
 
-* Implementar a integração com a API RAWG.
-* Implementar busca de jogos.
+* Implementar busca de jogos utilizando a API RAWG.
 * Implementar listagem de jogos populares.
 * Implementar lançamentos recentes.
 * Implementar jogos mais bem avaliados.
