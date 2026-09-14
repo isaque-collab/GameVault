@@ -6,9 +6,9 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 
 > **Status:** em desenvolvimento
 >
-> **Etapa atual:** desenvolvimento Back-end — integração inicial com a API RAWG concluída e validada.
+> **Etapa atual:** desenvolvimento Back-end — busca paginada por nome no cliente RAWG concluída e validada.
 >
-> **Próximo foco:** implementação da busca de jogos utilizando a RAWG.
+> **Próximo foco:** criação da camada de serviço e do endpoint público de busca de jogos.
 
 ---
 
@@ -418,17 +418,31 @@ rawg
 │   ├── RawgConfig
 │   └── RawgProperties
 ├── dto
-│   └── RawgJogoDetalhesResposta
+│   ├── RawgBuscaJogosResposta
+│   ├── RawgJogoDetalhesResposta
+│   └── RawgJogoResumoResposta
 └── exception
     ├── JogoRawgNaoEncontradoException
     ├── RawgApiKeyNaoConfiguradaException
     └── RawgIntegracaoException
 ```
-O `RawgClient` realiza atualmente a consulta de um jogo pelo ID da RAWG:
+O `RawgClient` realiza atualmente duas operações na RAWG:
 
 ```text
 GET /games/{id}
+GET /games?search={nome}&page={pagina}&page_size=20
 ```
+
+A primeira consulta obtém os detalhes de um jogo pelo ID da RAWG. A segunda realiza uma busca paginada por nome, utilizando páginas com 20 resultados.
+
+A busca valida o nome informado e o número da página antes da comunicação externa. Espaços no início e no fim do nome são removidos.
+
+A resposta paginada mapeia:
+
+* a quantidade total de resultados;
+* a lista resumida de jogos da página atual.
+
+Os campos `next` e `previous` retornados pela RAWG não são mantidos no DTO do GameVault, pois essas URLs externas podem incluir a chave da API. A navegação entre páginas será controlada posteriormente pela própria API do GameVault.
 
 A resposta externa é mapeada para os seguintes dados:
 
@@ -459,8 +473,10 @@ O cliente trata explicitamente:
 * erros HTTP retornados pela RAWG;
 * resposta sem corpo;
 * falhas de comunicação com o serviço externo.
+* parâmetros de busca inválidos;
+* resposta com estrutura inválida;
 
-Essa integração ainda não possui um endpoint público próprio no GameVault. Atualmente, ela representa a infraestrutura necessária para as próximas funcionalidades de consulta e busca de jogos.
+Essa integração ainda não possui um endpoint público próprio no GameVault. O cliente RAWG já fornece a infraestrutura necessária para consultar jogos por ID e realizar buscas paginadas por nome. A próxima implementação deverá expor a busca por meio das camadas de serviço e controller, sem retornar diretamente os DTOs da API externa.
 
 ---
 
@@ -560,6 +576,13 @@ Os cenários cobertos incluem:
 * resposta sem corpo;
 * chave da API não configurada;
 * falha de comunicação.
+* busca paginada por nome;
+* remoção de espaços desnecessários do termo pesquisado;
+* envio dos parâmetros `search`, `page` e `page_size`;
+* mapeamento do total e dos jogos encontrados;
+* busca sem resultados;
+* rejeição de nome vazio e página inválida;
+* resposta paginada com estrutura inválida;
 
 ---
 
@@ -832,6 +855,12 @@ RAWG_API_KEY=sua_chave
 * Tratamento de falhas HTTP e de comunicação.
 * Validação de chave ausente e resposta sem corpo.
 * Testes isolados com `MockRestServiceServer`.
+* Busca paginada de jogos por nome.
+* Página fixa com 20 resultados.
+* DTO específico para a resposta paginada.
+* DTO resumido para os jogos da listagem.
+* Validação do nome pesquisado e da página solicitada.
+* Tratamento de busca vazia e resposta estruturalmente inválida.
 
 ### Validação
 
@@ -843,7 +872,10 @@ RAWG_API_KEY=sua_chave
 
 # Próximos passos
 
-* Implementar busca de jogos utilizando a API RAWG.
+* Criar a camada de serviço para a busca de jogos.
+* Criar o endpoint público de busca do GameVault.
+* Mapear os DTOs externos da RAWG para DTOs próprios da API.
+* Implementar filtros e ordenações da busca em blocos posteriores.
 * Implementar listagem de jogos populares.
 * Implementar lançamentos recentes.
 * Implementar jogos mais bem avaliados.
