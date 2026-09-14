@@ -1,6 +1,7 @@
 package com.gamevault.rawg.client;
 
 import com.gamevault.rawg.config.RawgProperties;
+import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
 import com.gamevault.rawg.dto.RawgJogoDetalhesResposta;
 import com.gamevault.rawg.exception.JogoRawgNaoEncontradoException;
 import com.gamevault.rawg.exception.RawgApiKeyNaoConfiguradaException;
@@ -14,6 +15,8 @@ import org.springframework.web.client.RestClientException;
 
 @Component
 public class RawgClient {
+
+    private static final int TAMANHO_PAGINA_BUSCA = 20;
 
     private final RestClient restClient;
     private final RawgProperties properties;
@@ -39,7 +42,7 @@ public class RawgClient {
                     .retrieve()
                     .onStatus(
                             status -> status.value()
-                            == HttpStatus.NOT_FOUND.value(),
+                                    == HttpStatus.NOT_FOUND.value(),
                             (request, response) -> {
                                 throw new JogoRawgNaoEncontradoException(
                                         rawgGameId
@@ -51,8 +54,8 @@ public class RawgClient {
                             (request, response) -> {
                                 throw new RawgIntegracaoException(
                                         "A RAWG retornou o status HTTP "
-                                        + response.getStatusCode().value()
-                                        + "."
+                                                + response.getStatusCode().value()
+                                                + "."
                                 );
                             }
                     )
@@ -74,6 +77,80 @@ public class RawgClient {
             throw new RawgIntegracaoException(
                     "Não foi possível consultar a RAWG.",
                     exception
+            );
+        }
+    }
+
+    public RawgBuscaJogosResposta buscarJogosPorNome(
+            String nome,
+            int pagina
+    ) {
+        validarApiKey();
+        validarParametrosBusca(nome, pagina);
+
+        try {
+            RawgBuscaJogosResposta resposta = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/games")
+                            .queryParam("key", properties.apiKey())
+                            .queryParam("search", nome.trim())
+                            .queryParam("page", pagina)
+                            .queryParam(
+                                    "page_size",
+                                    TAMANHO_PAGINA_BUSCA
+                            )
+                            .build())
+                    .retrieve()
+                    .onStatus(
+                            HttpStatusCode::isError,
+                            (request, response) -> {
+                                throw new RawgIntegracaoException(
+                                        "A RAWG retornou o status HTTP "
+                                                + response.getStatusCode().value()
+                                                + "."
+                                );
+                            }
+                    )
+                    .body(RawgBuscaJogosResposta.class);
+
+            if (resposta == null) {
+                throw new RawgIntegracaoException(
+                        "A RAWG retornou uma resposta sem corpo."
+                );
+            }
+
+            if (resposta.total() == null
+                    || resposta.resultados() == null) {
+                throw new RawgIntegracaoException(
+                        "A RAWG retornou uma resposta inválida."
+                );
+            }
+
+            return resposta;
+        } catch (RawgIntegracaoException exception) {
+            throw exception;
+        } catch (RestClientException exception) {
+            throw new RawgIntegracaoException(
+                    "Não foi possível consultar a RAWG.",
+                    exception
+            );
+        }
+    }
+
+    private void validarParametrosBusca(
+            String nome,
+            int pagina
+    ) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException(
+                    "O nome do jogo é obrigatório."
+            );
+        }
+
+        if (pagina < 1) {
+            throw new IllegalArgumentException(
+                    "A página deve ser maior ou igual a 1."
             );
         }
     }
