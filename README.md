@@ -6,9 +6,9 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 
 > **Status:** em desenvolvimento
 >
-> **Etapa atual:** desenvolvimento Back-end — busca pública e paginada de jogos por nome concluída e validada.
+> **Etapa atual:** desenvolvimento Back-end — filtro opcional por gênero na busca pública de jogos concluído e validado.
 >
-> **Próximo foco:** implementação incremental dos filtros e das ordenações da busca de jogos.
+> **Próximo foco:** implementação do filtro por plataforma na busca de jogos.
 
 ---
 
@@ -432,7 +432,7 @@ O `JogoService` utiliza o `RawgClient`, mas converte os DTOs externos em DTOs pr
 
 | Método | Endpoint                                  | Descrição                         | Resposta esperada |
 | ------ | ----------------------------------------- | --------------------------------- | ----------------- |
-| `GET`  | `/api/jogos?nome={nome}&pagina={pagina}` | Busca jogos por nome com paginação | `200 OK`          |
+| `GET` | `/api/jogos?nome={nome}&pagina={pagina}[&genero={genero}]` | Busca jogos por nome, com paginação e filtro opcional por gênero | `200 OK` |
 
 O endpoint é público e pode ser utilizado sem autenticação.
 
@@ -443,7 +443,11 @@ Regras implementadas:
 * a página deve ser maior ou igual a 1;
 * cada página solicita até 20 resultados da RAWG;
 * uma busca sem resultados retorna uma lista vazia;
-* os DTOs externos não são retornados diretamente ao consumidor.
+* os DTOs externos não são retornados diretamente ao consumidor;
+* o filtro `genero` é opcional;
+* o gênero deve ser informado pelo slug reconhecido pela RAWG, como `action` ou `indie`;
+* espaços no início e no fim do gênero são removidos;
+* quando o gênero estiver ausente ou em branco, a busca não aplica esse filtro.
 
 Exemplo conceitual de resposta:
 
@@ -495,8 +499,10 @@ O `RawgClient` realiza atualmente duas operações na RAWG:
 
 ```text
 GET /games/{id}
-GET /games?search={nome}&page={pagina}&page_size=20
+GET /games?search={nome}&page={pagina}&page_size=20[&genres={genero}]
 ```
+
+O parâmetro `genres` somente é enviado quando `genero` não é nulo nem está em branco.
 
 A primeira consulta obtém os detalhes de um jogo pelo ID da RAWG. A segunda realiza uma busca paginada por nome, utilizando páginas com 20 resultados.
 
@@ -931,6 +937,10 @@ RAWG_API_KEY=sua_chave
 * Acesso permitido para visitantes.
 * Tratamento de falhas externas com `502` e `503`.
 * Testes unitários e MVC.
+* Filtro opcional por gênero no cliente RAWG.
+* Propagação do filtro pelas camadas controller e service.
+* Busca com gênero informado.
+* Busca sem gênero e com gênero em branco.
 
 ### Integração RAWG
 
@@ -952,14 +962,15 @@ RAWG_API_KEY=sua_chave
 ### Validação
 
 * Fluxos principais validados ponta a ponta.
-* Suíte completa com 162 testes.
+* Suíte completa com 166 testes.
 * Build finalizado com `BUILD SUCCESS`.
 
 ---
 
 # Próximos passos
 
-* Implementar filtros e ordenações da busca em blocos posteriores.
+* Implementar filtro por plataforma na busca de jogos.
+* Implementar ordenações da busca em blocos posteriores.
 * Implementar listagem de jogos populares.
 * Implementar lançamentos recentes.
 * Implementar jogos mais bem avaliados.
