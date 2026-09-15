@@ -436,4 +436,75 @@ class RawgClientTest {
 
         servidor.verify();
     }
+
+    @Test
+    void deveBuscarJogosFiltrandoPorGenero() {
+        String respostaRawg = """
+            {
+              "count": 0,
+              "results": []
+            }
+            """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&search=Portal"
+                                + "&page=1"
+                                + "&page_size=20"
+                                + "&genres=action"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        RawgBuscaJogosResposta resultado =
+                rawgClient.buscarJogosPorNome(
+                        "Portal",
+                        1,
+                        " action "
+                );
+
+        assertThat(resultado.total()).isZero();
+        assertThat(resultado.resultados()).isEmpty();
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveIgnorarFiltroDeGeneroQuandoEstiverEmBranco() {
+        String respostaRawg = """
+            {
+              "count": 0,
+              "results": []
+            }
+            """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&search=Portal"
+                                + "&page=1"
+                                + "&page_size=20"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        RawgBuscaJogosResposta resultado =
+                rawgClient.buscarJogosPorNome(
+                        "Portal",
+                        1,
+                        "   "
+                );
+
+        assertThat(resultado.total()).isZero();
+        assertThat(resultado.resultados()).isEmpty();
+
+        servidor.verify();
+    }
 }
