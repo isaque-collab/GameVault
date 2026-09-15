@@ -56,7 +56,7 @@ class JogoControllerTest {
                         List.of(jogo)
                 );
 
-        when(jogoService.buscarJogosPorNome("Portal", 2))
+        when(jogoService.buscarJogosPorNome("Portal", 2, null))
                 .thenReturn(resposta);
 
         mockMvc.perform(
@@ -102,7 +102,7 @@ class JogoControllerTest {
                 );
 
         verify(jogoService)
-                .buscarJogosPorNome("Portal", 2);
+                .buscarJogosPorNome("Portal", 2, null);
     }
 
     @Test
@@ -114,7 +114,7 @@ class JogoControllerTest {
                         List.of()
                 );
 
-        when(jogoService.buscarJogosPorNome("Portal", 1))
+        when(jogoService.buscarJogosPorNome("Portal", 1, null))
                 .thenReturn(resposta);
 
         mockMvc.perform(
@@ -126,7 +126,7 @@ class JogoControllerTest {
                 .andExpect(jsonPath("$.jogos").isEmpty());
 
         verify(jogoService)
-                .buscarJogosPorNome("Portal", 1);
+                .buscarJogosPorNome("Portal", 1, null);
     }
 
     @Test
@@ -166,7 +166,7 @@ class JogoControllerTest {
     void deveRetornarBadGatewayQuandoRawgFalhar()
             throws Exception {
 
-        when(jogoService.buscarJogosPorNome("Portal", 1))
+        when(jogoService.buscarJogosPorNome("Portal", 1, null))
                 .thenThrow(new RawgIntegracaoException(
                         "Não foi possível consultar a RAWG."
                 ));
@@ -191,14 +191,14 @@ class JogoControllerTest {
                 );
 
         verify(jogoService)
-                .buscarJogosPorNome("Portal", 1);
+                .buscarJogosPorNome("Portal", 1, null);
     }
 
     @Test
     void deveRetornarServicoIndisponivelQuandoApiKeyNaoEstiverConfigurada()
             throws Exception {
 
-        when(jogoService.buscarJogosPorNome("Portal", 1))
+        when(jogoService.buscarJogosPorNome("Portal", 1, null))
                 .thenThrow(
                         new RawgApiKeyNaoConfiguradaException()
                 );
@@ -222,6 +222,37 @@ class JogoControllerTest {
                 );
 
         verify(jogoService)
-                .buscarJogosPorNome("Portal", 1);
+                .buscarJogosPorNome("Portal", 1, null);
+    }
+
+    @Test
+    void deveBuscarJogosFiltrandoPorGenero() throws Exception {
+        BuscaJogosResposta resposta =
+                new BuscaJogosResposta(
+                        1,
+                        0,
+                        List.of()
+                );
+
+        when(jogoService.buscarJogosPorNome(
+                "Portal",
+                1,
+                "action"
+        )).thenReturn(resposta);
+
+        mockMvc.perform(
+                        get("/api/jogos")
+                                .param("nome", "Portal")
+                                .param("genero", "action")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.jogos").isEmpty());
+
+        verify(jogoService).buscarJogosPorNome(
+                "Portal",
+                1,
+                "action"
+        );
     }
 }

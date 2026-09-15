@@ -52,11 +52,11 @@ class JogoServiceTest {
                         List.of(jogoRawg)
                 );
 
-        when(rawgClient.buscarJogosPorNome("Portal", 2))
+        when(rawgClient.buscarJogosPorNome("Portal", 2, null))
                 .thenReturn(respostaRawg);
 
         BuscaJogosResposta resultado =
-                jogoService.buscarJogosPorNome("Portal", 2);
+                jogoService.buscarJogosPorNome("Portal", 2, null);
 
         JogoResumoResposta jogo = resultado.jogos().get(0);
 
@@ -86,7 +86,11 @@ class JogoServiceTest {
         );
 
         verify(rawgClient)
-                .buscarJogosPorNome("Portal", 2);
+                .buscarJogosPorNome(
+                        "Portal",
+                        2,
+                        null
+                );
     }
 
     @Test
@@ -99,13 +103,15 @@ class JogoServiceTest {
 
         when(rawgClient.buscarJogosPorNome(
                 "JogoInexistente",
-                1
+                1,
+                null
         )).thenReturn(respostaRawg);
 
         BuscaJogosResposta resultado =
                 jogoService.buscarJogosPorNome(
                         "JogoInexistente",
-                        1
+                        1,
+                        null
                 );
 
         assertAll(
@@ -119,7 +125,45 @@ class JogoServiceTest {
 
         verify(rawgClient).buscarJogosPorNome(
                 "JogoInexistente",
-                1
+                1,
+                null
+        );
+    }
+
+    @Test
+    void deveRepassarFiltroDeGeneroParaRawg() {
+        RawgBuscaJogosResposta respostaRawg =
+                new RawgBuscaJogosResposta(
+                        0,
+                        List.of()
+                );
+
+        when(rawgClient.buscarJogosPorNome(
+                "Portal",
+                1,
+                "action"
+        )).thenReturn(respostaRawg);
+
+        BuscaJogosResposta resultado =
+                jogoService.buscarJogosPorNome(
+                        "Portal",
+                        1,
+                        "action"
+                );
+
+        assertAll(
+                () -> assertEquals(1, resultado.pagina()),
+                () -> assertEquals(
+                        0,
+                        resultado.totalResultados()
+                ),
+                () -> assertTrue(resultado.jogos().isEmpty())
+        );
+
+        verify(rawgClient).buscarJogosPorNome(
+                "Portal",
+                1,
+                "action"
         );
     }
 }
