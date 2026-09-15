@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriBuilder;
 
 @Component
 public class RawgClient {
@@ -85,22 +86,45 @@ public class RawgClient {
             String nome,
             int pagina
     ) {
+        return buscarJogosPorNome(
+                nome,
+                pagina,
+                null
+        );
+    }
+
+    public RawgBuscaJogosResposta buscarJogosPorNome(
+            String nome,
+            int pagina,
+            String genero
+    ) {
         validarApiKey();
         validarParametrosBusca(nome, pagina);
 
         try {
             RawgBuscaJogosResposta resposta = restClient
                     .get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/games")
-                            .queryParam("key", properties.apiKey())
-                            .queryParam("search", nome.trim())
-                            .queryParam("page", pagina)
-                            .queryParam(
-                                    "page_size",
-                                    TAMANHO_PAGINA_BUSCA
-                            )
-                            .build())
+                    .uri(uriBuilder -> {
+                        UriBuilder construtorUri = uriBuilder
+                                .path("/games")
+                                .queryParam("key", properties.apiKey())
+                                .queryParam("search", nome.trim())
+                                .queryParam("page", pagina)
+                                .queryParam(
+                                        "page_size",
+                                        TAMANHO_PAGINA_BUSCA
+                                );
+
+                        if (genero != null
+                                && !genero.isBlank()) {
+                            construtorUri.queryParam(
+                                    "genres",
+                                    genero.trim()
+                            );
+                        }
+
+                        return construtorUri.build();
+                    })
                     .retrieve()
                     .onStatus(
                             HttpStatusCode::isError,
