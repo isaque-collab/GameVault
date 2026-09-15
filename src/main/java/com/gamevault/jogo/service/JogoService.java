@@ -20,10 +20,15 @@ public class JogoService {
 
     public BuscaJogosResposta buscarJogosPorNome(
             String nome,
-            int pagina
+            int pagina,
+            String genero
     ) {
         RawgBuscaJogosResposta respostaRawg =
-                rawgClient.buscarJogosPorNome(nome, pagina);
+                rawgClient.buscarJogosPorNome(
+                        nome,
+                        pagina,
+                        genero
+                );
 
         List<JogoResumoResposta> jogos = respostaRawg
                 .resultados()

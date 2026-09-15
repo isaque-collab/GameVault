@@ -34,12 +34,19 @@ public class JogoController {
                     value = 1,
                     message = "A página deve ser maior ou igual a 1"
             )
-            int pagina
+            int pagina,
+
+            @RequestParam(
+                    name = "genero",
+                    required = false
+            )
+            String genero
     ) {
         BuscaJogosResposta resposta =
                 jogoService.buscarJogosPorNome(
                         nome,
-                        pagina
+                        pagina,
+                        genero
                 );
 
         return ResponseEntity.ok(resposta);
