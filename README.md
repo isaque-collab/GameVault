@@ -6,9 +6,9 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 
 > **Status:** em desenvolvimento
 >
-> **Etapa atual:** desenvolvimento Back-end — busca paginada por nome no cliente RAWG concluída e validada.
+> **Etapa atual:** desenvolvimento Back-end — busca pública e paginada de jogos por nome concluída e validada.
 >
-> **Próximo foco:** criação da camada de serviço e do endpoint público de busca de jogos.
+> **Próximo foco:** implementação incremental dos filtros e das ordenações da busca de jogos.
 
 ---
 
@@ -69,6 +69,10 @@ A estrutura atual é organizada em módulos como:
 com.gamevault
 ├── avaliacao
 ├── favorito
+├── jogo
+│   ├── controller
+│   ├── dto
+│   └── service
 ├── listadesejos
 ├── rawg
 │   ├── client
@@ -404,6 +408,67 @@ Um jogo sem avaliações é representado conceitualmente como:
 A ausência de avaliações não é confundida com uma avaliação de nota zero.
 
 ---
+
+# Busca de jogos
+
+O módulo `jogo` representa a camada pública de consulta ao catálogo externo.
+
+Sua estrutura atual é:
+
+```text
+jogo
+├── controller
+│   └── JogoController
+├── dto
+│   ├── BuscaJogosResposta
+│   └── JogoResumoResposta
+└── service
+    └── JogoService
+```
+
+O `JogoService` utiliza o `RawgClient`, mas converte os DTOs externos em DTOs próprios do GameVault. Dessa forma, o contrato público da aplicação não fica diretamente acoplado à estrutura retornada pela RAWG.
+
+## Endpoint de busca
+
+| Método | Endpoint                                  | Descrição                         | Resposta esperada |
+| ------ | ----------------------------------------- | --------------------------------- | ----------------- |
+| `GET`  | `/api/jogos?nome={nome}&pagina={pagina}` | Busca jogos por nome com paginação | `200 OK`          |
+
+O endpoint é público e pode ser utilizado sem autenticação.
+
+Regras implementadas:
+
+* o nome do jogo é obrigatório e não pode estar em branco;
+* a primeira página é utilizada quando `pagina` não é informada;
+* a página deve ser maior ou igual a 1;
+* cada página solicita até 20 resultados da RAWG;
+* uma busca sem resultados retorna uma lista vazia;
+* os DTOs externos não são retornados diretamente ao consumidor.
+
+Exemplo conceitual de resposta:
+
+```json
+{
+  "pagina": 1,
+  "totalResultados": 1,
+  "jogos": [
+    {
+      "rawgGameId": 4200,
+      "nome": "Portal 2",
+      "dataLancamento": "2011-04-18",
+      "imagemFundo": "https://exemplo.com/portal-2.jpg",
+      "notaRawg": 4.61,
+      "quantidadeAvaliacoesRawg": 6900,
+      "metacritic": 95
+    }
+  ]
+}
+```
+
+Falhas de comunicação com a RAWG retornam `502 Bad Gateway`. A ausência da chave de integração retorna `503 Service Unavailable`.
+
+---
+
 # Integração com a API RAWG
 
 A integração inicial com a RAWG utiliza o cliente HTTP síncrono `RestClient`, compatível com a arquitetura imperativa do projeto baseada em Spring MVC e Spring Data JPA.
@@ -472,11 +537,11 @@ O cliente trata explicitamente:
 * chave da API ausente;
 * erros HTTP retornados pela RAWG;
 * resposta sem corpo;
-* falhas de comunicação com o serviço externo.
+* falhas de comunicação com o serviço externo;
 * parâmetros de busca inválidos;
-* resposta com estrutura inválida;
+* resposta com estrutura inválida.
 
-Essa integração ainda não possui um endpoint público próprio no GameVault. O cliente RAWG já fornece a infraestrutura necessária para consultar jogos por ID e realizar buscas paginadas por nome. A próxima implementação deverá expor a busca por meio das camadas de serviço e controller, sem retornar diretamente os DTOs da API externa.
+O `RawgClient` é consumido pelo `JogoService`, que converte as respostas externas em DTOs próprios do GameVault. A busca é exposta publicamente pelo `JogoController`, sem revelar a API key nem retornar diretamente os contratos da RAWG.
 
 ---
 
@@ -503,6 +568,8 @@ Entre os cenários tratados estão:
 * senha inválida — `400 Bad Request`;
 * avaliação inválida — `400 Bad Request`;
 * validação de requisição — `400 Bad Request`;
+* falha de comunicação com a RAWG — `502 Bad Gateway`;
+* integração RAWG sem chave configurada — `503 Service Unavailable`;
 * acesso sem autenticação — `401 Unauthorized`.
 
 ---
@@ -540,7 +607,9 @@ Entre as regras validadas estão:
 * Favoritos;
 * Lista de Desejos;
 * Avaliações;
-* cenários de erro.
+* cenários de erro;
+* conversão dos DTOs da RAWG para os DTOs públicos de jogos;
+* busca de jogos com e sem resultados.
 
 ---
 
@@ -557,7 +626,12 @@ São validados:
 * autenticação;
 * autorização;
 * CSRF;
-* utilização do usuário autenticado.
+* utilização do usuário autenticado;
+* acesso público à busca de jogos;
+* página padrão da busca;
+* nome obrigatório e página válida;
+* estrutura JSON da resposta;
+* falhas externas representadas por `502` e `503`.
 
 ---
 
@@ -845,6 +919,19 @@ RAWG_API_KEY=sua_chave
 * Endpoint público de resumo.
 * Testes unitários, MVC e integração.
 
+### Busca de jogos
+
+* Módulo público `jogo`.
+* Serviço de consulta ao catálogo externo.
+* DTOs próprios para a resposta pública.
+* Endpoint `GET /api/jogos`.
+* Busca por nome.
+* Paginação com primeira página padrão.
+* Validação de nome e página.
+* Acesso permitido para visitantes.
+* Tratamento de falhas externas com `502` e `503`.
+* Testes unitários e MVC.
+
 ### Integração RAWG
 
 * Cliente HTTP baseado em `RestClient`.
@@ -865,16 +952,13 @@ RAWG_API_KEY=sua_chave
 ### Validação
 
 * Fluxos principais validados ponta a ponta.
-* Suíte completa validada com Maven.
+* Suíte completa com 162 testes.
 * Build finalizado com `BUILD SUCCESS`.
 
 ---
 
 # Próximos passos
 
-* Criar a camada de serviço para a busca de jogos.
-* Criar o endpoint público de busca do GameVault.
-* Mapear os DTOs externos da RAWG para DTOs próprios da API.
 * Implementar filtros e ordenações da busca em blocos posteriores.
 * Implementar listagem de jogos populares.
 * Implementar lançamentos recentes.
