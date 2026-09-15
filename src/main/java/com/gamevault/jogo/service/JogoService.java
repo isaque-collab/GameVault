@@ -1,6 +1,7 @@
 package com.gamevault.jogo.service;
 
 import com.gamevault.jogo.dto.BuscaJogosResposta;
+import com.gamevault.jogo.dto.FiltroCatalogoJogos;
 import com.gamevault.jogo.dto.JogoResumoResposta;
 import com.gamevault.rawg.client.RawgClient;
 import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
@@ -18,18 +19,22 @@ public class JogoService {
         this.rawgClient = rawgClient;
     }
 
-    public BuscaJogosResposta buscarJogosPorNome(
-            String nome,
-            int pagina,
-            String genero
+    public BuscaJogosResposta buscarJogos(
+            FiltroCatalogoJogos filtro
     ) {
         RawgBuscaJogosResposta respostaRawg =
-                rawgClient.buscarJogosPorNome(
-                        nome,
-                        pagina,
-                        genero
-                );
+                rawgClient.buscarJogos(filtro);
 
+        return mapearResposta(
+                filtro.pagina(),
+                respostaRawg
+        );
+    }
+
+    private BuscaJogosResposta mapearResposta(
+            int pagina,
+            RawgBuscaJogosResposta respostaRawg
+    ) {
         List<JogoResumoResposta> jogos = respostaRawg
                 .resultados()
                 .stream()

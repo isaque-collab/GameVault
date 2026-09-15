@@ -1,5 +1,6 @@
 package com.gamevault.rawg.client;
 
+import com.gamevault.jogo.dto.FiltroCatalogoJogos;
 import com.gamevault.rawg.config.RawgProperties;
 import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
 import com.gamevault.rawg.dto.RawgJogoDetalhesResposta;
@@ -82,44 +83,79 @@ public class RawgClient {
         }
     }
 
-    public RawgBuscaJogosResposta buscarJogosPorNome(
-            String nome,
-            int pagina
-    ) {
-        return buscarJogosPorNome(
-                nome,
-                pagina,
-                null
-        );
-    }
-
-    public RawgBuscaJogosResposta buscarJogosPorNome(
-            String nome,
-            int pagina,
-            String genero
+    public RawgBuscaJogosResposta buscarJogos(
+            FiltroCatalogoJogos filtro
     ) {
         validarApiKey();
-        validarParametrosBusca(nome, pagina);
+        validarFiltroCatalogo(filtro);
 
+        return executarBusca(filtro);
+    }
+
+    private RawgBuscaJogosResposta executarBusca(
+            FiltroCatalogoJogos filtro
+    ) {
         try {
             RawgBuscaJogosResposta resposta = restClient
                     .get()
                     .uri(uriBuilder -> {
                         UriBuilder construtorUri = uriBuilder
                                 .path("/games")
-                                .queryParam("key", properties.apiKey())
-                                .queryParam("search", nome.trim())
-                                .queryParam("page", pagina)
+                                .queryParam("key", properties.apiKey());
+
+                        adicionarParametroTexto(
+                                construtorUri,
+                                "search",
+                                filtro.nome()
+                        );
+
+                        construtorUri
+                                .queryParam("page", filtro.pagina())
                                 .queryParam(
                                         "page_size",
                                         TAMANHO_PAGINA_BUSCA
                                 );
 
-                        if (genero != null
-                                && !genero.isBlank()) {
+                        adicionarParametroTexto(
+                                construtorUri,
+                                "genres",
+                                filtro.genero()
+                        );
+
+                        if (filtro.plataforma() != null) {
                             construtorUri.queryParam(
-                                    "genres",
-                                    genero.trim()
+                                    "platforms",
+                                    filtro.plataforma()
+                            );
+                        }
+
+                        adicionarParametroTexto(
+                                construtorUri,
+                                "developers",
+                                filtro.desenvolvedora()
+                        );
+
+                        adicionarParametroTexto(
+                                construtorUri,
+                                "publishers",
+                                filtro.publicadora()
+                        );
+
+                        if (filtro.lancamentoInicio() != null
+                                && filtro.lancamentoFim() != null) {
+                            construtorUri.queryParam(
+                                    "dates",
+                                    filtro.lancamentoInicio()
+                                            + ","
+                                            + filtro.lancamentoFim()
+                            );
+                        }
+
+                        if (filtro.ordenacao() != null) {
+                            construtorUri.queryParam(
+                                    "ordering",
+                                    filtro.ordenacao()
+                                            .getParametroRawg()
                             );
                         }
 
@@ -137,7 +173,6 @@ public class RawgClient {
                             }
                     )
                     .body(RawgBuscaJogosResposta.class);
-
             if (resposta == null) {
                 throw new RawgIntegracaoException(
                         "A RAWG retornou uma resposta sem corpo."
@@ -162,19 +197,59 @@ public class RawgClient {
         }
     }
 
-    private void validarParametrosBusca(
-            String nome,
-            int pagina
+    private void adicionarParametroTexto(
+            UriBuilder uriBuilder,
+            String parametro,
+            String valor
     ) {
-        if (nome == null || nome.isBlank()) {
+        if (valor != null && !valor.isBlank()) {
+            uriBuilder.queryParam(
+                    parametro,
+                    valor.trim()
+            );
+        }
+    }
+
+    private void validarFiltroCatalogo(
+            FiltroCatalogoJogos filtro
+    ) {
+        if (filtro == null) {
             throw new IllegalArgumentException(
-                    "O nome do jogo é obrigatório."
+                    "O filtro do catálogo é obrigatório."
             );
         }
 
-        if (pagina < 1) {
+        if (filtro.pagina() < 1) {
             throw new IllegalArgumentException(
                     "A página deve ser maior ou igual a 1."
+            );
+        }
+
+        if (filtro.plataforma() != null
+                && filtro.plataforma() < 1) {
+            throw new IllegalArgumentException(
+                    "A plataforma deve possuir um identificador válido."
+            );
+        }
+
+        boolean possuiDataInicial =
+                filtro.lancamentoInicio() != null;
+
+        boolean possuiDataFinal =
+                filtro.lancamentoFim() != null;
+
+        if (possuiDataInicial != possuiDataFinal) {
+            throw new IllegalArgumentException(
+                    "As datas inicial e final devem ser informadas juntas."
+            );
+        }
+
+        if (possuiDataInicial
+                && possuiDataFinal
+                && filtro.lancamentoInicio()
+                .isAfter(filtro.lancamentoFim())) {
+            throw new IllegalArgumentException(
+                    "A data inicial não pode ser posterior à data final."
             );
         }
     }

@@ -1,5 +1,7 @@
 package com.gamevault.rawg.client;
 
+import com.gamevault.jogo.dto.FiltroCatalogoJogos;
+import com.gamevault.jogo.dto.OrdenacaoJogo;
 import com.gamevault.rawg.config.RawgConfig;
 import com.gamevault.rawg.config.RawgProperties;
 import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
@@ -229,6 +231,19 @@ class RawgClientTest {
             }
             """;
 
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        " Portal ",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        2
+                );
+
         servidor.expect(requestTo(
                         BASE_URL
                                 + "/games?key=chave-teste"
@@ -243,7 +258,7 @@ class RawgClientTest {
                 ));
 
         RawgBuscaJogosResposta resultado =
-                rawgClient.buscarJogosPorNome(" Portal ", 2);
+                rawgClient.buscarJogos(filtro);
 
         assertThat(resultado.total()).isEqualTo(41);
         assertThat(resultado.resultados()).hasSize(2);
@@ -277,6 +292,19 @@ class RawgClientTest {
             }
             """;
 
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        "JogoInexistente",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
+                );
+
         servidor.expect(requestTo(
                         BASE_URL
                                 + "/games?key=chave-teste"
@@ -291,10 +319,7 @@ class RawgClientTest {
                 ));
 
         RawgBuscaJogosResposta resultado =
-                rawgClient.buscarJogosPorNome(
-                        "JogoInexistente",
-                        1
-                );
+                rawgClient.buscarJogos(filtro);
 
         assertThat(resultado.total()).isZero();
         assertThat(resultado.resultados()).isEmpty();
@@ -303,31 +328,20 @@ class RawgClientTest {
     }
 
     @Test
-    void deveLancarExcecaoQuandoNomeDaBuscaEstiverEmBranco() {
-        assertThatThrownBy(
-                () -> rawgClient.buscarJogosPorNome("   ", 1)
-        )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("O nome do jogo é obrigatório.");
-
-        servidor.verify();
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoPaginaDaBuscaForInvalida() {
-        assertThatThrownBy(
-                () -> rawgClient.buscarJogosPorNome("Portal", 0)
-        )
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage(
-                        "A página deve ser maior ou igual a 1."
+    void deveLancarExcecaoQuandoBuscaRawgRetornarErro() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        "Portal",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
                 );
 
-        servidor.verify();
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoBuscaRawgRetornarErro() {
         servidor.expect(requestTo(
                         BASE_URL
                                 + "/games?key=chave-teste"
@@ -341,7 +355,7 @@ class RawgClientTest {
                 ));
 
         assertThatThrownBy(
-                () -> rawgClient.buscarJogosPorNome("Portal", 1)
+                () -> rawgClient.buscarJogos(filtro)
         )
                 .isInstanceOf(RawgIntegracaoException.class)
                 .hasMessage(
@@ -353,6 +367,20 @@ class RawgClientTest {
 
     @Test
     void deveLancarExcecaoQuandoBuscaRawgRetornarRespostaSemCorpo() {
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        "Portal",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
+                );
+
         servidor.expect(requestTo(
                         BASE_URL
                                 + "/games?key=chave-teste"
@@ -367,7 +395,7 @@ class RawgClientTest {
                 ));
 
         assertThatThrownBy(
-                () -> rawgClient.buscarJogosPorNome("Portal", 1)
+                () -> rawgClient.buscarJogos(filtro)
         )
                 .isInstanceOf(RawgIntegracaoException.class)
                 .hasMessage(
@@ -379,11 +407,25 @@ class RawgClientTest {
 
     @Test
     void deveLancarExcecaoQuandoBuscaRawgRetornarRespostaInvalida() {
+
         String respostaRawg = """
             {
               "count": 1
             }
             """;
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        "Portal",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
+                );
 
         servidor.expect(requestTo(
                         BASE_URL
@@ -399,7 +441,7 @@ class RawgClientTest {
                 ));
 
         assertThatThrownBy(
-                () -> rawgClient.buscarJogosPorNome("Portal", 1)
+                () -> rawgClient.buscarJogos(filtro)
         )
                 .isInstanceOf(RawgIntegracaoException.class)
                 .hasMessage(
@@ -425,8 +467,21 @@ class RawgClientTest {
                         )
                 ));
 
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        "Portal",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
+                );
+
         assertThatThrownBy(
-                () -> rawgClient.buscarJogosPorNome("Portal", 1)
+                () -> rawgClient.buscarJogos(filtro)
         )
                 .isInstanceOf(RawgIntegracaoException.class)
                 .hasMessage(
@@ -438,21 +493,19 @@ class RawgClientTest {
     }
 
     @Test
-    void deveBuscarJogosFiltrandoPorGenero() {
+    void deveBuscarCatalogoSemNome() {
         String respostaRawg = """
-            {
-              "count": 0,
-              "results": []
-            }
-            """;
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
 
         servidor.expect(requestTo(
                         BASE_URL
                                 + "/games?key=chave-teste"
-                                + "&search=Portal"
                                 + "&page=1"
                                 + "&page_size=20"
-                                + "&genres=action"
                 ))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(
@@ -460,12 +513,21 @@ class RawgClientTest {
                         MediaType.APPLICATION_JSON
                 ));
 
-        RawgBuscaJogosResposta resultado =
-                rawgClient.buscarJogosPorNome(
-                        "Portal",
-                        1,
-                        " action "
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
                 );
+
+        RawgBuscaJogosResposta resultado =
+                rawgClient.buscarJogos(filtro);
 
         assertThat(resultado.total()).isZero();
         assertThat(resultado.resultados()).isEmpty();
@@ -474,20 +536,20 @@ class RawgClientTest {
     }
 
     @Test
-    void deveIgnorarFiltroDeGeneroQuandoEstiverEmBranco() {
+    void deveBuscarCatalogoFiltrandoPorPlataforma() {
         String respostaRawg = """
-            {
-              "count": 0,
-              "results": []
-            }
-            """;
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
 
         servidor.expect(requestTo(
                         BASE_URL
                                 + "/games?key=chave-teste"
-                                + "&search=Portal"
                                 + "&page=1"
                                 + "&page_size=20"
+                                + "&platforms=4"
                 ))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(
@@ -495,15 +557,330 @@ class RawgClientTest {
                         MediaType.APPLICATION_JSON
                 ));
 
-        RawgBuscaJogosResposta resultado =
-                rawgClient.buscarJogosPorNome(
-                        "Portal",
-                        1,
-                        "   "
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        4,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
                 );
 
-        assertThat(resultado.total()).isZero();
-        assertThat(resultado.resultados()).isEmpty();
+        rawgClient.buscarJogos(filtro);
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveBuscarCatalogoFiltrandoPorDesenvolvedora() {
+        String respostaRawg = """
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&page=1"
+                                + "&page_size=20"
+                                + "&developers=valve"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        " valve ",
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
+                );
+
+        rawgClient.buscarJogos(filtro);
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveBuscarCatalogoFiltrandoPorPublicadora() {
+        String respostaRawg = """
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&page=1"
+                                + "&page_size=20"
+                                + "&publishers=electronic-arts"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        " electronic-arts ",
+                        null,
+                        null,
+                        null,
+                        1
+                );
+
+        rawgClient.buscarJogos(filtro);
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveBuscarCatalogoFiltrandoPorPeriodoDeLancamento() {
+        String respostaRawg = """
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&page=1"
+                                + "&page_size=20"
+                                + "&dates=2026-01-01,2026-12-31"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDate.of(2026, 1, 1),
+                        LocalDate.of(2026, 12, 31),
+                        null,
+                        1
+                );
+
+        rawgClient.buscarJogos(filtro);
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveBuscarCatalogoOrdenandoPorPopularidade() {
+        String respostaRawg = """
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&page=1"
+                                + "&page_size=20"
+                                + "&ordering=-added"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        OrdenacaoJogo.POPULARIDADE,
+                        1
+                );
+
+        rawgClient.buscarJogos(filtro);
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveBuscarCatalogoComMultiplosFiltros() {
+        String respostaRawg = """
+        {
+          "count": 0,
+          "results": []
+        }
+        """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games?key=chave-teste"
+                                + "&search=Portal"
+                                + "&page=2"
+                                + "&page_size=20"
+                                + "&genres=action"
+                                + "&platforms=4"
+                                + "&developers=valve"
+                                + "&publishers=electronic-arts"
+                                + "&dates=2020-01-01,2026-12-31"
+                                + "&ordering=-metacritic"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        " Portal ",
+                        " action ",
+                        4,
+                        " valve ",
+                        " electronic-arts ",
+                        LocalDate.of(2020, 1, 1),
+                        LocalDate.of(2026, 12, 31),
+                        OrdenacaoJogo.METACRITIC,
+                        2
+                );
+
+        rawgClient.buscarJogos(filtro);
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoPaginaDoCatalogoForInvalida() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        0
+                );
+
+        assertThatThrownBy(
+                () -> rawgClient.buscarJogos(filtro)
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "A página deve ser maior ou igual a 1."
+                );
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoPlataformaForInvalida() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        0,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1
+                );
+
+        assertThatThrownBy(
+                () -> rawgClient.buscarJogos(filtro)
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "A plataforma deve possuir um identificador válido."
+                );
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoSomenteUmaDataForInformada() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDate.of(2026, 1, 1),
+                        null,
+                        null,
+                        1
+                );
+
+        assertThatThrownBy(
+                () -> rawgClient.buscarJogos(filtro)
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "As datas inicial e final devem ser informadas juntas."
+                );
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoPeriodoDeLancamentoForInvertido() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDate.of(2026, 12, 31),
+                        LocalDate.of(2026, 1, 1),
+                        null,
+                        1
+                );
+
+        assertThatThrownBy(
+                () -> rawgClient.buscarJogos(filtro)
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "A data inicial não pode ser posterior à data final."
+                );
 
         servidor.verify();
     }

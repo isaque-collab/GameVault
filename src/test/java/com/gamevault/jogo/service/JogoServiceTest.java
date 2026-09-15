@@ -1,7 +1,9 @@
 package com.gamevault.jogo.service;
 
 import com.gamevault.jogo.dto.BuscaJogosResposta;
+import com.gamevault.jogo.dto.FiltroCatalogoJogos;
 import com.gamevault.jogo.dto.JogoResumoResposta;
+import com.gamevault.jogo.dto.OrdenacaoJogo;
 import com.gamevault.rawg.client.RawgClient;
 import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
 import com.gamevault.rawg.dto.RawgJogoResumoResposta;
@@ -34,7 +36,20 @@ class JogoServiceTest {
     }
 
     @Test
-    void deveBuscarJogosPorNomeEMapearRespostaDaRawg() {
+    void deveBuscarCatalogoComFiltrosEMapearRespostaDaRawg() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        "Portal",
+                        "action",
+                        4,
+                        "valve",
+                        "electronic-arts",
+                        LocalDate.of(2020, 1, 1),
+                        LocalDate.of(2026, 12, 31),
+                        OrdenacaoJogo.METACRITIC,
+                        2
+                );
+
         RawgJogoResumoResposta jogoRawg =
                 new RawgJogoResumoResposta(
                         4200L,
@@ -52,13 +67,14 @@ class JogoServiceTest {
                         List.of(jogoRawg)
                 );
 
-        when(rawgClient.buscarJogosPorNome("Portal", 2, null))
+        when(rawgClient.buscarJogos(filtro))
                 .thenReturn(respostaRawg);
 
         BuscaJogosResposta resultado =
-                jogoService.buscarJogosPorNome("Portal", 2, null);
+                jogoService.buscarJogos(filtro);
 
-        JogoResumoResposta jogo = resultado.jogos().get(0);
+        JogoResumoResposta jogo =
+                resultado.jogos().get(0);
 
         assertAll(
                 () -> assertEquals(2, resultado.pagina()),
@@ -67,8 +83,14 @@ class JogoServiceTest {
                         resultado.totalResultados()
                 ),
                 () -> assertEquals(1, resultado.jogos().size()),
-                () -> assertEquals(4200L, jogo.rawgGameId()),
-                () -> assertEquals("Portal 2", jogo.nome()),
+                () -> assertEquals(
+                        4200L,
+                        jogo.rawgGameId()
+                ),
+                () -> assertEquals(
+                        "Portal 2",
+                        jogo.nome()
+                ),
                 () -> assertEquals(
                         LocalDate.of(2011, 4, 18),
                         jogo.dataLancamento()
@@ -77,42 +99,49 @@ class JogoServiceTest {
                         "https://exemplo.com/portal-2.jpg",
                         jogo.imagemFundo()
                 ),
-                () -> assertEquals(4.61, jogo.notaRawg()),
+                () -> assertEquals(
+                        4.61,
+                        jogo.notaRawg()
+                ),
                 () -> assertEquals(
                         6900,
                         jogo.quantidadeAvaliacoesRawg()
                 ),
-                () -> assertEquals(95, jogo.metacritic())
+                () -> assertEquals(
+                        95,
+                        jogo.metacritic()
+                )
         );
 
-        verify(rawgClient)
-                .buscarJogosPorNome(
-                        "Portal",
-                        2,
-                        null
-                );
+        verify(rawgClient).buscarJogos(filtro);
     }
 
     @Test
-    void deveRetornarListaVaziaQuandoRawgNaoEncontrarJogos() {
+    void deveRetornarListaVaziaAoBuscarCatalogoSemResultados() {
+        FiltroCatalogoJogos filtro =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        OrdenacaoJogo.POPULARIDADE,
+                        1
+                );
+
         RawgBuscaJogosResposta respostaRawg =
                 new RawgBuscaJogosResposta(
                         0,
                         List.of()
                 );
 
-        when(rawgClient.buscarJogosPorNome(
-                "JogoInexistente",
-                1,
-                null
-        )).thenReturn(respostaRawg);
+        when(rawgClient.buscarJogos(filtro))
+                .thenReturn(respostaRawg);
 
         BuscaJogosResposta resultado =
-                jogoService.buscarJogosPorNome(
-                        "JogoInexistente",
-                        1,
-                        null
-                );
+                jogoService.buscarJogos(filtro);
 
         assertAll(
                 () -> assertEquals(1, resultado.pagina()),
@@ -120,50 +149,11 @@ class JogoServiceTest {
                         0,
                         resultado.totalResultados()
                 ),
-                () -> assertTrue(resultado.jogos().isEmpty())
+                () -> assertTrue(
+                        resultado.jogos().isEmpty()
+                )
         );
 
-        verify(rawgClient).buscarJogosPorNome(
-                "JogoInexistente",
-                1,
-                null
-        );
-    }
-
-    @Test
-    void deveRepassarFiltroDeGeneroParaRawg() {
-        RawgBuscaJogosResposta respostaRawg =
-                new RawgBuscaJogosResposta(
-                        0,
-                        List.of()
-                );
-
-        when(rawgClient.buscarJogosPorNome(
-                "Portal",
-                1,
-                "action"
-        )).thenReturn(respostaRawg);
-
-        BuscaJogosResposta resultado =
-                jogoService.buscarJogosPorNome(
-                        "Portal",
-                        1,
-                        "action"
-                );
-
-        assertAll(
-                () -> assertEquals(1, resultado.pagina()),
-                () -> assertEquals(
-                        0,
-                        resultado.totalResultados()
-                ),
-                () -> assertTrue(resultado.jogos().isEmpty())
-        );
-
-        verify(rawgClient).buscarJogosPorNome(
-                "Portal",
-                1,
-                "action"
-        );
+        verify(rawgClient).buscarJogos(filtro);
     }
 }
