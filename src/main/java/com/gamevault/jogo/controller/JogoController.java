@@ -113,4 +113,58 @@ public class JogoController {
 
         return ResponseEntity.ok(resposta);
     }
+
+    @GetMapping("/populares")
+    public ResponseEntity<BuscaJogosResposta> buscarJogosPopulares(
+            @RequestParam(
+                    name = "pagina",
+                    defaultValue = "1"
+            )
+            @Min(
+                    value = 1,
+                    message = "A página deve ser maior ou igual a 1"
+            )
+            int pagina
+    ) {
+        BuscaJogosResposta resposta =
+                jogoService.buscarJogosPopulares(pagina);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @GetMapping("/lancamentos-recentes")
+    public ResponseEntity<BuscaJogosResposta> buscarLancamentosRecentes(
+            @RequestParam(
+                    name = "pagina",
+                    defaultValue = "1"
+            )
+            @Min(
+                    value = 1,
+                    message = "A página deve ser maior ou igual a 1"
+            )
+            int pagina
+    ) {
+        BuscaJogosResposta resposta =
+                jogoService.buscarLancamentosRecentes(pagina);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @GetMapping("/mais-bem-avaliados")
+    public ResponseEntity<BuscaJogosResposta> buscarJogosMaisBemAvaliados(
+            @RequestParam(
+                    name = "pagina",
+                    defaultValue = "1"
+            )
+            @Min(
+                    value = 1,
+                    message = "A página deve ser maior ou igual a 1"
+            )
+            int pagina
+    ) {
+        BuscaJogosResposta resposta =
+                jogoService.buscarJogosMaisBemAvaliados(pagina);
+
+        return ResponseEntity.ok(resposta);
+    }
 }

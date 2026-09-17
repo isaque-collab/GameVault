@@ -13,7 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -32,7 +35,15 @@ class JogoServiceTest {
 
     @BeforeEach
     void configurar() {
-        jogoService = new JogoService(rawgClient);
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-09-16T12:00:00Z"),
+                ZoneOffset.UTC
+        );
+
+        jogoService = new JogoService(
+                rawgClient,
+                clock
+        );
     }
 
     @Test
@@ -155,5 +166,122 @@ class JogoServiceTest {
         );
 
         verify(rawgClient).buscarJogos(filtro);
+    }
+
+    @Test
+    void deveBuscarJogosPopulares() {
+        FiltroCatalogoJogos filtroEsperado =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        OrdenacaoJogo.POPULARIDADE,
+                        1
+                );
+
+        RawgBuscaJogosResposta respostaRawg =
+                new RawgBuscaJogosResposta(
+                        0,
+                        List.of()
+                );
+
+        when(rawgClient.buscarJogos(filtroEsperado))
+                .thenReturn(respostaRawg);
+
+        BuscaJogosResposta resultado =
+                jogoService.buscarJogosPopulares(1);
+
+        assertAll(
+                () -> assertEquals(1, resultado.pagina()),
+                () -> assertEquals(
+                        0,
+                        resultado.totalResultados()
+                ),
+                () -> assertTrue(resultado.jogos().isEmpty())
+        );
+
+        verify(rawgClient).buscarJogos(filtroEsperado);
+    }
+
+    @Test
+    void deveBuscarLancamentosDosUltimosTrintaDias() {
+        FiltroCatalogoJogos filtroEsperado =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDate.of(2026, 8, 18),
+                        LocalDate.of(2026, 9, 16),
+                        OrdenacaoJogo.LANCAMENTO,
+                        1
+                );
+
+        RawgBuscaJogosResposta respostaRawg =
+                new RawgBuscaJogosResposta(
+                        0,
+                        List.of()
+                );
+
+        when(rawgClient.buscarJogos(filtroEsperado))
+                .thenReturn(respostaRawg);
+
+        BuscaJogosResposta resultado =
+                jogoService.buscarLancamentosRecentes(1);
+
+        assertAll(
+                () -> assertEquals(1, resultado.pagina()),
+                () -> assertEquals(
+                        0,
+                        resultado.totalResultados()
+                ),
+                () -> assertTrue(resultado.jogos().isEmpty())
+        );
+
+        verify(rawgClient).buscarJogos(filtroEsperado);
+    }
+
+    @Test
+    void deveBuscarJogosMaisBemAvaliados() {
+        FiltroCatalogoJogos filtroEsperado =
+                new FiltroCatalogoJogos(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        OrdenacaoJogo.AVALIACAO_RAWG,
+                        1
+                );
+
+        RawgBuscaJogosResposta respostaRawg =
+                new RawgBuscaJogosResposta(
+                        0,
+                        List.of()
+                );
+
+        when(rawgClient.buscarJogos(filtroEsperado))
+                .thenReturn(respostaRawg);
+
+        BuscaJogosResposta resultado =
+                jogoService.buscarJogosMaisBemAvaliados(1);
+
+        assertAll(
+                () -> assertEquals(1, resultado.pagina()),
+                () -> assertEquals(
+                        0,
+                        resultado.totalResultados()
+                ),
+                () -> assertTrue(resultado.jogos().isEmpty())
+        );
+
+        verify(rawgClient).buscarJogos(filtroEsperado);
     }
 }

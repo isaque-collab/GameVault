@@ -420,4 +420,84 @@ class JogoControllerTest {
 
         verifyNoInteractions(jogoService);
     }
+
+    @Test
+    void deveBuscarJogosPopulares() throws Exception {
+        BuscaJogosResposta resposta =
+                new BuscaJogosResposta(
+                        1,
+                        0,
+                        List.of()
+                );
+
+        when(jogoService.buscarJogosPopulares(1))
+                .thenReturn(resposta);
+
+        mockMvc.perform(
+                        get("/api/jogos/populares")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.jogos").isEmpty());
+
+        verify(jogoService).buscarJogosPopulares(1);
+    }
+
+    @Test
+    void deveBuscarLancamentosRecentes() throws Exception {
+        BuscaJogosResposta resposta =
+                new BuscaJogosResposta(
+                        1,
+                        0,
+                        List.of()
+                );
+
+        when(jogoService.buscarLancamentosRecentes(1))
+                .thenReturn(resposta);
+
+        mockMvc.perform(
+                        get("/api/jogos/lancamentos-recentes")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.jogos").isEmpty());
+
+        verify(jogoService).buscarLancamentosRecentes(1);
+    }
+
+    @Test
+    void deveBuscarJogosMaisBemAvaliados() throws Exception {
+        BuscaJogosResposta resposta =
+                new BuscaJogosResposta(
+                        1,
+                        0,
+                        List.of()
+                );
+
+        when(jogoService.buscarJogosMaisBemAvaliados(1))
+                .thenReturn(resposta);
+
+        mockMvc.perform(
+                        get("/api/jogos/mais-bem-avaliados")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.jogos").isEmpty());
+
+        verify(jogoService)
+                .buscarJogosMaisBemAvaliados(1);
+    }
+
+    @Test
+    void deveRejeitarPaginaInvalidaNasConsultasDaHome()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/api/jogos/populares")
+                                .param("pagina", "0")
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(jogoService);
+    }
 }
