@@ -222,4 +222,32 @@ class ListaDesejosServiceTest {
                 )
         );
     }
+
+    @Test
+    void deveInformarQuandoJogoEstaNaListaDeDesejos() {
+        Long userId = 1L;
+        Long rawgGameId = 3498L;
+
+        when(
+                itemListaDesejosRepository
+                        .existsByUsuarioIdAndRawgGameId(
+                                userId,
+                                rawgGameId
+                        )
+        ).thenReturn(true);
+
+        boolean resultado =
+                listaDesejosService.estaNaListaDeDesejos(
+                        userId,
+                        rawgGameId
+                );
+
+        assertTrue(resultado);
+
+        verify(itemListaDesejosRepository)
+                .existsByUsuarioIdAndRawgGameId(
+                        userId,
+                        rawgGameId
+                );
+    }
 }

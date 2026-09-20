@@ -1,14 +1,13 @@
 package com.gamevault.jogo.controller;
 
-import com.gamevault.jogo.dto.BuscaJogosResposta;
-import com.gamevault.jogo.dto.FiltroCatalogoJogos;
-import com.gamevault.jogo.dto.JogoResumoResposta;
-import com.gamevault.jogo.dto.OrdenacaoJogo;
+import com.gamevault.jogo.dto.*;
 import com.gamevault.jogo.service.JogoService;
+import com.gamevault.rawg.exception.JogoRawgNaoEncontradoException;
 import com.gamevault.rawg.exception.RawgApiKeyNaoConfiguradaException;
 import com.gamevault.rawg.exception.RawgIntegracaoException;
 import com.gamevault.shared.config.SecurityConfig;
 import com.gamevault.shared.exception.TratadorGlobalExcecoes;
+import com.gamevault.user.security.UsuarioPrincipal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -22,6 +21,7 @@ import java.util.List;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -499,5 +499,248 @@ class JogoControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(jogoService);
+    }
+
+    @Test
+    void deveBuscarDetalhesPublicosDoJogo() throws Exception {
+        JogoDetalhesResposta resposta =
+                new JogoDetalhesResposta(
+                        3498L,
+                        "Grand Theft Auto V",
+                        "Um jogo de ação em mundo aberto.",
+                        LocalDate.of(2013, 9, 17),
+                        "https://exemplo.com/gta-v.jpg",
+                        4.47,
+                        7000,
+                        92,
+                        4.5,
+                        12L,
+                        null,
+                        null,
+                        null,
+                        32,
+                        "Mature",
+                        List.of("Action"),
+                        List.of(
+                                new PlataformaJogoDetalhesResposta(
+                                        4L,
+                                        "PC",
+                                        "pc",
+                                        "Windows 10",
+                                        "Windows 11"
+                                )
+                        ),
+                        List.of("Rockstar North"),
+                        List.of("Rockstar Games"),
+                        List.of(
+                                "https://exemplo.com/screenshot-1.jpg"
+                        )
+                );
+
+        when(jogoService.buscarDetalhesJogo(
+                3498L,
+                null))
+                .thenReturn(resposta);
+
+        mockMvc.perform(
+                        get("/api/jogos/3498")
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.rawgGameId")
+                                .value(3498)
+                )
+                .andExpect(
+                        jsonPath("$.nome")
+                                .value("Grand Theft Auto V")
+                )
+                .andExpect(
+                        jsonPath("$.descricao")
+                                .value(
+                                        "Um jogo de ação em mundo aberto."
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.dataLancamento")
+                                .value("2013-09-17")
+                )
+                .andExpect(
+                        jsonPath("$.notaRawg")
+                                .value(4.47)
+                )
+                .andExpect(
+                        jsonPath("$.metacritic")
+                                .value(92)
+                )
+                .andExpect(
+                        jsonPath("$.tempoMedioJogo")
+                                .value(32)
+                )
+                .andExpect(
+                        jsonPath("$.classificacaoEtaria")
+                                .value("Mature")
+                )
+                .andExpect(
+                        jsonPath("$.generos[0]")
+                                .value("Action")
+                )
+                .andExpect(
+                        jsonPath("$.plataformas[0].nome")
+                                .value("PC")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.plataformas[0].requisitoMinimo"
+                        ).value("Windows 10")
+                )
+                .andExpect(
+                        jsonPath("$.desenvolvedoras[0]")
+                                .value("Rockstar North")
+                )
+                .andExpect(
+                        jsonPath("$.publicadoras[0]")
+                                .value("Rockstar Games")
+                )
+                .andExpect(
+                        jsonPath("$.screenshots[0]")
+                                .value(
+                                        "https://exemplo.com/screenshot-1.jpg"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.mediaAvaliacoesGameVault")
+                                .value(4.5)
+                )
+                .andExpect(
+                        jsonPath("$.quantidadeAvaliacoesGameVault")
+                                .value(12)
+                );
+
+        verify(jogoService).buscarDetalhesJogo(
+                3498L,
+                null
+        );
+    }
+
+    @Test
+    void deveRetornarNotFoundQuandoJogoNaoExistirNaRawg()
+            throws Exception {
+
+        when(jogoService.buscarDetalhesJogo(
+                999999L,
+                null))
+                .thenThrow(
+                        new JogoRawgNaoEncontradoException(
+                                999999L
+                        )
+                );
+
+        mockMvc.perform(
+                        get("/api/jogos/999999")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(
+                        jsonPath("$.status").value(404)
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value("Recurso não encontrado")
+                )
+                .andExpect(
+                        jsonPath("$.detail")
+                                .value(
+                                        "Jogo não encontrado na RAWG: 999999"
+                                )
+                );
+
+        verify(jogoService)
+                .buscarDetalhesJogo(
+                        999999L,
+                        null
+                );
+    }
+
+    @Test
+    void deveRejeitarIdentificadorDeJogoInvalido()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/api/jogos/0")
+                )
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(jogoService);
+    }
+
+    @Test
+    void deveBuscarDetalhesPersonalizadosParaUsuarioAutenticado()
+            throws Exception {
+
+        JogoDetalhesResposta resposta =
+                new JogoDetalhesResposta(
+                        3498L,
+                        "Grand Theft Auto V",
+                        "Descrição",
+                        LocalDate.of(2013, 9, 17),
+                        "imagem.jpg",
+                        4.47,
+                        7000,
+                        92,
+                        4.5,
+                        12L,
+                        (byte) 5,
+                        true,
+                        false,
+                        32,
+                        "Mature",
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        List.of()
+                );
+
+        when(
+                jogoService.buscarDetalhesJogo(
+                        3498L,
+                        1L
+                )
+        ).thenReturn(resposta);
+
+        mockMvc.perform(
+                        get("/api/jogos/3498")
+                                .with(
+                                        user(
+                                                usuarioPrincipal()
+                                        )
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.minhaAvaliacao")
+                                .value(5)
+                )
+                .andExpect(
+                        jsonPath("$.favoritado")
+                                .value(true)
+                )
+                .andExpect(
+                        jsonPath("$.naListaDesejos")
+                                .value(false)
+                );
+
+        verify(jogoService)
+                .buscarDetalhesJogo(
+                        3498L,
+                        1L
+                );
+    }
+
+    private UsuarioPrincipal usuarioPrincipal() {
+        return new UsuarioPrincipal(
+                1L,
+                "usuario@gamevault.test",
+                "{bcrypt}hash"
+        );
     }
 }

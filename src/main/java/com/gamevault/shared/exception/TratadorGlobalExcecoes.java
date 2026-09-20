@@ -6,6 +6,7 @@ import com.gamevault.favorito.exception.FavoritoJaExisteException;
 import com.gamevault.favorito.exception.FavoritoNaoEncontradoException;
 import com.gamevault.listadesejos.exception.ItemListaDesejosJaExisteException;
 import com.gamevault.listadesejos.exception.ItemListaDesejosNaoEncontradoException;
+import com.gamevault.rawg.exception.JogoRawgNaoEncontradoException;
 import com.gamevault.rawg.exception.RawgApiKeyNaoConfiguradaException;
 import com.gamevault.rawg.exception.RawgIntegracaoException;
 import com.gamevault.user.exception.*;
@@ -35,7 +36,8 @@ public class TratadorGlobalExcecoes {
             FavoritoNaoEncontradoException.class,
             ItemListaDesejosNaoEncontradoException.class,
             AvaliacaoNaoEncontradaException.class,
-            UsuarioNaoEncontradoException.class
+            UsuarioNaoEncontradoException.class,
+            JogoRawgNaoEncontradoException.class
     })
     public ProblemDetail tratarRecursoNaoEncontrado(
             RuntimeException exception

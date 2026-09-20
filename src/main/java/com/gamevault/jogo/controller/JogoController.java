@@ -2,16 +2,16 @@ package com.gamevault.jogo.controller;
 
 import com.gamevault.jogo.dto.BuscaJogosResposta;
 import com.gamevault.jogo.dto.FiltroCatalogoJogos;
+import com.gamevault.jogo.dto.JogoDetalhesResposta;
 import com.gamevault.jogo.dto.OrdenacaoJogo;
 import com.gamevault.jogo.service.JogoService;
+import com.gamevault.user.security.UsuarioPrincipal;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
@@ -164,6 +164,32 @@ public class JogoController {
     ) {
         BuscaJogosResposta resposta =
                 jogoService.buscarJogosMaisBemAvaliados(pagina);
+
+        return ResponseEntity.ok(resposta);
+    }
+
+    @GetMapping("/{rawgGameId}")
+    public ResponseEntity<JogoDetalhesResposta> buscarDetalhesJogo(
+            @PathVariable
+            @Min(
+                    value = 1,
+                    message = "O identificador do jogo deve ser maior ou igual a 1"
+            )
+            Long rawgGameId,
+
+            @AuthenticationPrincipal
+            UsuarioPrincipal usuarioPrincipal
+    ) {
+        Long usuarioId =
+                usuarioPrincipal == null
+                        ? null
+                        : usuarioPrincipal.getId();
+
+        JogoDetalhesResposta resposta =
+                jogoService.buscarDetalhesJogo(
+                        rawgGameId,
+                        usuarioId
+                );
 
         return ResponseEntity.ok(resposta);
     }

@@ -59,4 +59,15 @@ public class FavoritoService {
     public List<Favorito> listarFavoritos(Long userId) {
         return favoritoRepository.findAllByUsuarioId(userId);
     }
+
+    public boolean estaFavoritado(
+            Long userId,
+            Long rawgGameId
+    ) {
+        return favoritoRepository
+                .existsByUsuarioIdAndRawgGameId(
+                        userId,
+                        rawgGameId
+                );
+    }
 }

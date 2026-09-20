@@ -183,4 +183,32 @@ class FavoritoServiceTest {
                 )
         );
     }
+
+    @Test
+    void deveInformarQuandoJogoEstaFavoritado() {
+        Long userId = 1L;
+        Long rawgGameId = 3498L;
+
+        when(
+                favoritoRepository
+                        .existsByUsuarioIdAndRawgGameId(
+                                userId,
+                                rawgGameId
+                        )
+        ).thenReturn(true);
+
+        boolean resultado =
+                favoritoService.estaFavoritado(
+                        userId,
+                        rawgGameId
+                );
+
+        assertTrue(resultado);
+
+        verify(favoritoRepository)
+                .existsByUsuarioIdAndRawgGameId(
+                        userId,
+                        rawgGameId
+                );
+    }
 }

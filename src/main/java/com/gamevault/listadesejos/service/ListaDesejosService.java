@@ -72,4 +72,15 @@ public class ListaDesejosService {
     public List<ItemListaDesejos> listar(Long userId){
         return itemListaDesejosRepository.findAllByUsuarioId(userId);
     }
+
+    public boolean estaNaListaDeDesejos(
+            Long userId,
+            Long rawgGameId
+    ) {
+        return itemListaDesejosRepository
+                .existsByUsuarioIdAndRawgGameId(
+                        userId,
+                        rawgGameId
+                );
+    }
 }
