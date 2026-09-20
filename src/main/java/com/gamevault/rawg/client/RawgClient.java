@@ -4,6 +4,7 @@ import com.gamevault.jogo.dto.FiltroCatalogoJogos;
 import com.gamevault.rawg.config.RawgProperties;
 import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
 import com.gamevault.rawg.dto.RawgJogoDetalhesResposta;
+import com.gamevault.rawg.dto.RawgScreenshotsResposta;
 import com.gamevault.rawg.exception.JogoRawgNaoEncontradoException;
 import com.gamevault.rawg.exception.RawgApiKeyNaoConfiguradaException;
 import com.gamevault.rawg.exception.RawgIntegracaoException;
@@ -66,6 +67,67 @@ public class RawgClient {
             if (resposta == null) {
                 throw new RawgIntegracaoException(
                         "A RAWG retornou uma resposta sem corpo."
+                );
+            }
+
+            return resposta;
+        } catch (
+                JogoRawgNaoEncontradoException
+                | RawgIntegracaoException exception
+        ) {
+            throw exception;
+        } catch (RestClientException exception) {
+            throw new RawgIntegracaoException(
+                    "Não foi possível consultar a RAWG.",
+                    exception
+            );
+        }
+    }
+
+    public RawgScreenshotsResposta buscarScreenshotsPorJogo(
+            Long rawgGameId
+    ) {
+        validarApiKey();
+
+        try {
+            RawgScreenshotsResposta resposta = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/games/{id}/screenshots")
+                            .queryParam("key", properties.apiKey())
+                            .build(rawgGameId))
+                    .retrieve()
+                    .onStatus(
+                            status -> status.value()
+                                    == HttpStatus.NOT_FOUND.value(),
+                            (request, response) -> {
+                                throw new JogoRawgNaoEncontradoException(
+                                        rawgGameId
+                                );
+                            }
+                    )
+                    .onStatus(
+                            HttpStatusCode::isError,
+                            (request, response) -> {
+                                throw new RawgIntegracaoException(
+                                        "A RAWG retornou o status HTTP "
+                                                + response.getStatusCode().value()
+                                                + "."
+                                );
+                            }
+                    )
+                    .body(RawgScreenshotsResposta.class);
+
+            if (resposta == null) {
+                throw new RawgIntegracaoException(
+                        "A RAWG retornou uma resposta sem corpo."
+                );
+            }
+
+            if (resposta.total() == null
+                    || resposta.resultados() == null) {
+                throw new RawgIntegracaoException(
+                        "A RAWG retornou uma resposta inválida."
                 );
             }
 

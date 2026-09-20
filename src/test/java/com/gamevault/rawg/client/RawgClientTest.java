@@ -7,6 +7,7 @@ import com.gamevault.rawg.config.RawgProperties;
 import com.gamevault.rawg.dto.RawgBuscaJogosResposta;
 import com.gamevault.rawg.dto.RawgJogoDetalhesResposta;
 import com.gamevault.rawg.dto.RawgJogoResumoResposta;
+import com.gamevault.rawg.dto.RawgScreenshotsResposta;
 import com.gamevault.rawg.exception.JogoRawgNaoEncontradoException;
 import com.gamevault.rawg.exception.RawgApiKeyNaoConfiguradaException;
 import com.gamevault.rawg.exception.RawgIntegracaoException;
@@ -880,6 +881,93 @@ class RawgClientTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(
                         "A data inicial não pode ser posterior à data final."
+                );
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveBuscarScreenshotsDoJogoEMapearRespostaDaRawg() {
+        String respostaRawg = """
+            {
+              "count": 2,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "image": "https://exemplo.com/screenshot-1.jpg",
+                  "width": 1920,
+                  "height": 1080,
+                  "hidden": false
+                },
+                {
+                  "id": 2,
+                  "image": "https://exemplo.com/screenshot-2.jpg",
+                  "width": 1920,
+                  "height": 1080,
+                  "hidden": true
+                }
+              ]
+            }
+            """;
+
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games/3498/screenshots"
+                                + "?key=chave-teste"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        respostaRawg,
+                        MediaType.APPLICATION_JSON
+                ));
+
+        RawgScreenshotsResposta resultado =
+                rawgClient.buscarScreenshotsPorJogo(3498L);
+
+        assertThat(resultado.total()).isEqualTo(2);
+        assertThat(resultado.resultados()).hasSize(2);
+
+        assertThat(resultado.resultados().get(0).image())
+                .isEqualTo(
+                        "https://exemplo.com/screenshot-1.jpg"
+                );
+
+        assertThat(resultado.resultados().get(0).oculto())
+                .isFalse();
+
+        assertThat(resultado.resultados().get(1).image())
+                .isEqualTo(
+                        "https://exemplo.com/screenshot-2.jpg"
+                );
+
+        assertThat(resultado.resultados().get(1).oculto())
+                .isTrue();
+
+        servidor.verify();
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoJogoDosScreenshotsNaoForEncontrado() {
+        servidor.expect(requestTo(
+                        BASE_URL
+                                + "/games/999999/screenshots"
+                                + "?key=chave-teste"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThatThrownBy(
+                () -> rawgClient.buscarScreenshotsPorJogo(
+                        999999L
+                )
+        )
+                .isInstanceOf(
+                        JogoRawgNaoEncontradoException.class
+                )
+                .hasMessage(
+                        "Jogo não encontrado na RAWG: 999999"
                 );
 
         servidor.verify();
