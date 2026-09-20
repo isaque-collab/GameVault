@@ -27,3 +27,7 @@ spring:
 rawg:
   base-url: https://api.rawg.io/api
   api-key: ${RAWG_API_KEY:}
+
+gamevault:
+  cors:
+    allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
