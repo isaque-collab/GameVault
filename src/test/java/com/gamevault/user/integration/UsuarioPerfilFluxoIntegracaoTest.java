@@ -9,32 +9,42 @@ import com.gamevault.listadesejos.repository.ItemListaDesejosRepository;
 import com.gamevault.user.entity.Usuario;
 import com.gamevault.user.repository.UsuarioRepository;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
+
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+                "gamevault.profile-image.directory=target/test-profile-images"
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
 class UsuarioPerfilFluxoIntegracaoTest {
@@ -57,6 +67,13 @@ class UsuarioPerfilFluxoIntegracaoTest {
     private static final String SENHA =
             "senha123";
 
+    private static final Path DIRETORIO_FOTOS =
+            Path.of(
+                            "target/test-profile-images"
+                    )
+                    .toAbsolutePath()
+                    .normalize();
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -78,6 +95,34 @@ class UsuarioPerfilFluxoIntegracaoTest {
         );
 
         usuarioRepository.saveAndFlush(usuario);
+    }
+
+    @AfterEach
+    void limparFotosDeTeste()
+            throws IOException {
+
+        if (!Files.exists(DIRETORIO_FOTOS)) {
+            return;
+        }
+
+        try (
+                Stream<Path> arquivos =
+                        Files.list(DIRETORIO_FOTOS)
+        ) {
+            arquivos.forEach(
+                    arquivo -> {
+                        try {
+                            Files.deleteIfExists(
+                                    arquivo
+                            );
+                        } catch (IOException exception) {
+                            throw new RuntimeException(
+                                    exception
+                            );
+                        }
+                    }
+            );
+        }
     }
 
     @Test
@@ -182,12 +227,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                    {
-                                      "nome": "Usuário Perfil Atualizado",
-                                      "username": "usuario_perfil_atualizado",
-                                      "email": "usuario.perfil.atualizado@gamevault.test"
-                                    }
-                                    """)
+                                        {
+                                          "nome": "Usuário Perfil Atualizado",
+                                          "username": "usuario_perfil_atualizado",
+                                          "email": "usuario.perfil.atualizado@gamevault.test"
+                                        }
+                                        """)
                 )
                 .andExpect(
                         status().isOk()
@@ -241,12 +286,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                    {
-                                      "nome": "Usuário",
-                                      "username": "usuario",
-                                      "email": "usuario@gamevault.test"
-                                    }
-                                    """)
+                                        {
+                                          "nome": "Usuário",
+                                          "username": "usuario",
+                                          "email": "usuario@gamevault.test"
+                                        }
+                                        """)
                 )
                 .andExpect(
                         status().isUnauthorized()
@@ -282,12 +327,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                    {
-                                      "nome": "Usuário Perfil",
-                                      "username": "usuario_perfil",
-                                      "email": "outro.perfil@gamevault.test"
-                                    }
-                                    """)
+                                        {
+                                          "nome": "Usuário Perfil",
+                                          "username": "usuario_perfil",
+                                          "email": "outro.perfil@gamevault.test"
+                                        }
+                                        """)
                 )
                 .andExpect(
                         status().isConflict()
@@ -323,12 +368,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                    {
-                                      "senhaAtual": "senha123",
-                                      "novaSenha": "novaSenha123",
-                                      "confirmacaoNovaSenha": "novaSenha123"
-                                    }
-                                    """)
+                                        {
+                                          "senhaAtual": "senha123",
+                                          "novaSenha": "novaSenha123",
+                                          "confirmacaoNovaSenha": "novaSenha123"
+                                        }
+                                        """)
                 )
                 .andExpect(
                         status().isNoContent()
@@ -414,12 +459,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                    {
-                                      "senhaAtual": "senha-incorreta",
-                                      "novaSenha": "novaSenha123",
-                                      "confirmacaoNovaSenha": "novaSenha123"
-                                    }
-                                    """)
+                                        {
+                                          "senhaAtual": "senha-incorreta",
+                                          "novaSenha": "novaSenha123",
+                                          "confirmacaoNovaSenha": "novaSenha123"
+                                        }
+                                        """)
                 )
                 .andExpect(
                         status().isBadRequest()
@@ -453,12 +498,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                         MediaType.APPLICATION_JSON
                                 )
                                 .content("""
-                                    {
-                                      "senhaAtual": "senha123",
-                                      "novaSenha": "novaSenha123",
-                                      "confirmacaoNovaSenha": "novaSenha123"
-                                    }
-                                    """)
+                                        {
+                                          "senhaAtual": "senha123",
+                                          "novaSenha": "novaSenha123",
+                                          "confirmacaoNovaSenha": "novaSenha123"
+                                        }
+                                        """)
                 )
                 .andExpect(
                         status().isUnauthorized()
@@ -505,8 +550,8 @@ class UsuarioPerfilFluxoIntegracaoTest {
         avaliacaoRepository.save(avaliacao);
 
         /*
-        * Garante que todos os registros existam
-        * fisicamente no banco antes da exclusão
+         * Garante que todos os registros existam
+         * fisicamente no banco antes da exclusão
          */
         entityManager.flush();
         entityManager.clear();
@@ -533,12 +578,12 @@ class UsuarioPerfilFluxoIntegracaoTest {
         );
 
         /*
-        * As consultas acima carregam novamente
-        * entidades no contexto de persistência.
-        *
-        * Limpamos o contexto para que o Hibernate
-        * não tente gerenciar os relacionamentos
-        * durante a remoção do usuário.
+         * As consultas acima carregam novamente
+         * entidades no contexto de persistência.
+         *
+         * Limpamos o contexto para que o Hibernate
+         * não tente gerenciar os relacionamentos
+         * durante a remoção do usuário.
          */
         entityManager.clear();
 
@@ -605,5 +650,355 @@ class UsuarioPerfilFluxoIntegracaoTest {
                 .andExpect(
                         status().isUnauthorized()
                 );
+    }
+
+    @Test
+    void deveExecutarFluxoCompletoDaFotoDePerfil()
+            throws Exception {
+
+        MockHttpSession sessao =
+                autenticar();
+
+        byte[] jpeg = {
+                (byte) 0xFF,
+                (byte) 0xD8,
+                (byte) 0xFF,
+                0x01,
+                0x02
+        };
+
+        MockMultipartFile fotoJpeg =
+                new MockMultipartFile(
+                        "foto",
+                        "perfil.jpg",
+                        MediaType.IMAGE_JPEG_VALUE,
+                        jpeg
+                );
+
+        /*
+         * 1. Define a primeira foto.
+         */
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(fotoJpeg)
+                                .session(sessao)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        "/api/usuarios/me/foto"
+                                )
+                );
+
+        Usuario usuarioComFoto =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        String primeiraChave =
+                usuarioComFoto.getProfileImageUrl();
+
+        assertTrue(
+                primeiraChave.endsWith(
+                        ".jpg"
+                )
+        );
+
+        assertTrue(
+                Files.exists(
+                        DIRETORIO_FOTOS.resolve(
+                                primeiraChave
+                        )
+                )
+        );
+
+        /*
+         * 2. O perfil passa a informar o endpoint
+         * da foto, e não a chave física armazenada.
+         */
+        mockMvc.perform(
+                        get("/api/usuarios/me")
+                                .session(sessao)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        "/api/usuarios/me/foto"
+                                )
+                );
+
+        /*
+         * 3. A foto pode ser consultada e os bytes
+         * são realmente os que foram enviados.
+         */
+        mockMvc.perform(
+                        get("/api/usuarios/me/foto")
+                                .session(sessao)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        content().contentType(
+                                MediaType.IMAGE_JPEG
+                        )
+                )
+                .andExpect(
+                        content().bytes(
+                                jpeg
+                        )
+                );
+
+        /*
+         * 4. Substitui JPEG por PNG.
+         */
+        byte[] png = {
+                (byte) 0x89,
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,
+                0x03
+        };
+
+        MockMultipartFile fotoPng =
+                new MockMultipartFile(
+                        "foto",
+                        "nova-foto.png",
+                        MediaType.IMAGE_PNG_VALUE,
+                        png
+                );
+
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(fotoPng)
+                                .session(sessao)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        "/api/usuarios/me/foto"
+                                )
+                );
+
+        Usuario usuarioComNovaFoto =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        String segundaChave =
+                usuarioComNovaFoto
+                        .getProfileImageUrl();
+
+        assertTrue(
+                segundaChave.endsWith(
+                        ".png"
+                )
+        );
+
+        assertNotEquals(
+                primeiraChave,
+                segundaChave
+        );
+
+        /*
+         * A imagem antiga deve ter sido removida.
+         */
+        assertTrue(
+                Files.notExists(
+                        DIRETORIO_FOTOS.resolve(
+                                primeiraChave
+                        )
+                )
+        );
+
+        assertTrue(
+                Files.exists(
+                        DIRETORIO_FOTOS.resolve(
+                                segundaChave
+                        )
+                )
+        );
+
+        /*
+         * 5. O GET agora entrega a nova imagem.
+         */
+        mockMvc.perform(
+                        get("/api/usuarios/me/foto")
+                                .session(sessao)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        content().contentType(
+                                MediaType.IMAGE_PNG
+                        )
+                )
+                .andExpect(
+                        content().bytes(
+                                png
+                        )
+                );
+
+        /*
+         * 6. Remove a foto.
+         */
+        mockMvc.perform(
+                        delete(
+                                "/api/usuarios/me/foto"
+                        )
+                                .session(sessao)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        Usuario usuarioSemFoto =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        assertEquals(
+                null,
+                usuarioSemFoto.getProfileImageUrl()
+        );
+
+        assertTrue(
+                Files.notExists(
+                        DIRETORIO_FOTOS.resolve(
+                                segundaChave
+                        )
+                )
+        );
+
+        /*
+         * 7. O perfil volta a informar foto nula.
+         */
+        mockMvc.perform(
+                        get("/api/usuarios/me")
+                                .session(sessao)
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        nullValue()
+                                )
+                );
+
+        /*
+         * 8. A imagem removida não pode mais
+         * ser consultada.
+         */
+        mockMvc.perform(
+                        get("/api/usuarios/me/foto")
+                                .session(sessao)
+                )
+                .andExpect(
+                        status().isNotFound()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Foto de perfil não encontrada"
+                                )
+                );
+    }
+
+    @Test
+    void deveExcluirContaERemoverFotoDePerfilArmazenada()
+            throws Exception {
+
+        MockHttpSession sessao =
+                autenticar();
+
+        byte[] jpeg = {
+                (byte) 0xFF,
+                (byte) 0xD8,
+                (byte) 0xFF,
+                0x01
+        };
+
+        MockMultipartFile foto =
+                new MockMultipartFile(
+                        "foto",
+                        "perfil.jpg",
+                        MediaType.IMAGE_JPEG_VALUE,
+                        jpeg
+                );
+
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(foto)
+                                .session(sessao)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isOk()
+                );
+
+        Usuario usuario =
+                usuarioRepository
+                        .findByEmail(EMAIL)
+                        .orElseThrow();
+
+        String chave =
+                usuario.getProfileImageUrl();
+
+        Path arquivo =
+                DIRETORIO_FOTOS.resolve(chave);
+
+        assertTrue(
+                Files.exists(arquivo)
+        );
+
+        mockMvc.perform(
+                        delete("/api/usuarios/me")
+                                .session(sessao)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(
+                usuarioRepository
+                        .findById(usuario.getId())
+                        .isEmpty()
+        );
+
+        assertTrue(
+                Files.notExists(arquivo)
+        );
     }
 }

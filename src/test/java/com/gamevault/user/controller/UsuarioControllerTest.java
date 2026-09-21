@@ -2,17 +2,19 @@ package com.gamevault.user.controller;
 
 import com.gamevault.shared.exception.TratadorGlobalExcecoes;
 import com.gamevault.user.entity.Usuario;
-import com.gamevault.user.exception.SenhaAtualInvalidaException;
+import com.gamevault.user.exception.*;
 import com.gamevault.user.security.UsuarioPrincipal;
-import com.gamevault.user.exception.EmailJaCadastradoException;
-import com.gamevault.user.exception.SenhasNaoCoincidemException;
-import com.gamevault.user.exception.UsernameJaCadastradoException;
+import com.gamevault.user.service.FotoPerfilService;
 import com.gamevault.user.service.UsuarioService;
+import com.gamevault.user.storage.FotoPerfilArquivo;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,12 +22,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @WebMvcTest(UsuarioController.class)
 @Import(TratadorGlobalExcecoes.class)
@@ -36,6 +35,9 @@ class UsuarioControllerTest {
 
     @MockitoBean
     private UsuarioService usuarioService;
+
+    @MockitoBean
+    private FotoPerfilService fotoPerfilService;
 
     @Test
     @WithMockUser
@@ -804,8 +806,357 @@ class UsuarioControllerTest {
                         status().isNoContent()
                 );
 
-        verify(usuarioService)
+        InOrder ordem =
+                inOrder(
+                        fotoPerfilService,
+                        usuarioService
+                );
+
+        ordem.verify(fotoPerfilService)
+                .removerFoto(1L);
+
+        ordem.verify(usuarioService)
                 .excluirConta(1L);
+    }
+
+    @Test
+    void deveDefinirFotoDePerfilDoUsuarioAutenticado()
+            throws Exception {
+
+        MockMultipartFile foto =
+                new MockMultipartFile(
+                        "foto",
+                        "perfil.jpg",
+                        MediaType.IMAGE_JPEG_VALUE,
+                        new byte[]{
+                                (byte) 0xFF,
+                                (byte) 0xD8,
+                                (byte) 0xFF
+                        }
+                );
+
+        Usuario usuario = mock(Usuario.class);
+
+        when(usuario.getId())
+                .thenReturn(1L);
+
+        when(usuario.getName())
+                .thenReturn("Isaque");
+
+        when(usuario.getUsername())
+                .thenReturn("isaque");
+
+        when(usuario.getEmail())
+                .thenReturn("isaque@gamevault.test");
+
+        when(usuario.getProfileImageUrl())
+                .thenReturn("foto-interna.jpg");
+
+        when(
+                fotoPerfilService.atualizarFoto(
+                        eq(1L),
+                        any(MockMultipartFile.class)
+                )
+        ).thenReturn(usuario);
+
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(foto)
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$.id")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.imagemPerfil")
+                                .value(
+                                        "/api/usuarios/me/foto"
+                                )
+                );
+
+        verify(fotoPerfilService)
+                .atualizarFoto(
+                        eq(1L),
+                        any(MockMultipartFile.class)
+                );
+    }
+
+    @Test
+    void deveRetornarFotoDePerfilDoUsuarioAutenticado()
+            throws Exception {
+
+        byte[] conteudo = {
+                (byte) 0xFF,
+                (byte) 0xD8,
+                (byte) 0xFF,
+                0x01
+        };
+
+        FotoPerfilArquivo arquivo =
+                new FotoPerfilArquivo(
+                        conteudo,
+                        MediaType.IMAGE_JPEG
+                );
+
+        when(
+                fotoPerfilService.buscarFoto(1L)
+        ).thenReturn(
+                arquivo
+        );
+
+        mockMvc.perform(
+                        get("/api/usuarios/me/foto")
+                                .with(user(usuarioPrincipal()))
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        content().contentType(
+                                MediaType.IMAGE_JPEG
+                        )
+                )
+                .andExpect(
+                        content().bytes(
+                                conteudo
+                        )
+                );
+
+        verify(fotoPerfilService)
+                .buscarFoto(1L);
+    }
+
+    @Test
+    void deveRemoverFotoDePerfilDoUsuarioAutenticado()
+            throws Exception {
+
+        Usuario usuario = mock(Usuario.class);
+
+        when(
+                fotoPerfilService.removerFoto(1L)
+        ).thenReturn(
+                usuario
+        );
+
+        mockMvc.perform(
+                        delete("/api/usuarios/me/foto")
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isNoContent()
+                );
+
+        verify(fotoPerfilService)
+                .removerFoto(1L);
+    }
+
+    @Test
+    void deveBloquearUploadDeFotoSemAutenticacao()
+            throws Exception {
+
+        MockMultipartFile foto =
+                new MockMultipartFile(
+                        "foto",
+                        "perfil.jpg",
+                        MediaType.IMAGE_JPEG_VALUE,
+                        new byte[]{
+                                (byte) 0xFF,
+                                (byte) 0xD8,
+                                (byte) 0xFF
+                        }
+                );
+
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(foto)
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+
+        verifyNoInteractions(
+                fotoPerfilService
+        );
+    }
+
+    @Test
+    void deveBloquearConsultaDeFotoSemAutenticacao()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/api/usuarios/me/foto")
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+
+        verifyNoInteractions(
+                fotoPerfilService
+        );
+    }
+
+    @Test
+    void deveBloquearRemocaoDeFotoSemAutenticacao()
+            throws Exception {
+
+        mockMvc.perform(
+                        delete("/api/usuarios/me/foto")
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isUnauthorized()
+                );
+
+        verifyNoInteractions(
+                fotoPerfilService
+        );
+    }
+
+    @Test
+    void deveRetornarBadRequestQuandoFotoForInvalida()
+            throws Exception {
+
+        MockMultipartFile foto =
+                new MockMultipartFile(
+                        "foto",
+                        "arquivo.txt",
+                        MediaType.TEXT_PLAIN_VALUE,
+                        "arquivo-invalido".getBytes()
+                );
+
+        when(
+                fotoPerfilService.atualizarFoto(
+                        eq(1L),
+                        any(MockMultipartFile.class)
+                )
+        ).thenThrow(
+                new FotoPerfilInvalidaException(
+                        "A foto deve estar no formato JPEG, PNG ou WebP."
+                )
+        );
+
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(foto)
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isBadRequest()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Foto de perfil inválida"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.detail")
+                                .value(
+                                        "A foto deve estar no formato JPEG, PNG ou WebP."
+                                )
+                );
+    }
+
+    @Test
+    void deveRetornarPayloadTooLargeQuandoFotoExcederLimite()
+            throws Exception {
+
+        MockMultipartFile foto =
+                new MockMultipartFile(
+                        "foto",
+                        "perfil.jpg",
+                        MediaType.IMAGE_JPEG_VALUE,
+                        new byte[]{
+                                (byte) 0xFF,
+                                (byte) 0xD8,
+                                (byte) 0xFF
+                        }
+                );
+
+        when(
+                fotoPerfilService.atualizarFoto(
+                        eq(1L),
+                        any(MockMultipartFile.class)
+                )
+        ).thenThrow(
+                new FotoPerfilMuitoGrandeException()
+        );
+
+        mockMvc.perform(
+                        multipart(
+                                HttpMethod.PUT,
+                                "/api/usuarios/me/foto"
+                        )
+                                .file(foto)
+                                .with(user(usuarioPrincipal()))
+                                .with(csrf())
+                )
+                .andExpect(
+                        status().isPayloadTooLarge()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Foto de perfil muito grande"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.detail")
+                                .value(
+                                        "A foto de perfil deve possuir no máximo 2 MB."
+                                )
+                );
+    }
+
+    @Test
+    void deveRetornarNotFoundQuandoUsuarioNaoPossuirFoto()
+            throws Exception {
+
+        when(
+                fotoPerfilService.buscarFoto(1L)
+        ).thenThrow(
+                new FotoPerfilNaoEncontradaException()
+        );
+
+        mockMvc.perform(
+                        get("/api/usuarios/me/foto")
+                                .with(user(usuarioPrincipal()))
+                )
+                .andExpect(
+                        status().isNotFound()
+                )
+                .andExpect(
+                        jsonPath("$.title")
+                                .value(
+                                        "Foto de perfil não encontrada"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.detail")
+                                .value(
+                                        "Foto de perfil não encontrada."
+                                )
+                );
+
+        verify(fotoPerfilService)
+                .buscarFoto(1L);
     }
 
     private UsuarioPrincipal usuarioPrincipal() {
