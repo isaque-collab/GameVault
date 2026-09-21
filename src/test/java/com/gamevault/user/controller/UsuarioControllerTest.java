@@ -398,17 +398,14 @@ class UsuarioControllerTest {
                 .thenReturn("isaque@gamevault.test");
 
         when(usuario.getProfileImageUrl())
-                .thenReturn(
-                        "https://exemplo.com/perfil.jpg"
-                );
+                .thenReturn(null);
 
         when(
                 usuarioService.atualizarPerfil(
                         1L,
                         "Isaque Costa da Cunha",
                         "isaque-collab",
-                        "isaque@gamevault.test",
-                        "https://exemplo.com/perfil.jpg"
+                        "isaque@gamevault.test"
                 )
         ).thenReturn(usuario);
 
@@ -423,8 +420,7 @@ class UsuarioControllerTest {
                                     {
                                       "nome": "Isaque Costa da Cunha",
                                       "username": "isaque-collab",
-                                      "email": "isaque@gamevault.test",
-                                      "imagemPerfil": "https://exemplo.com/perfil.jpg"
+                                      "email": "isaque@gamevault.test"
                                     }
                                     """)
                 )
@@ -453,9 +449,7 @@ class UsuarioControllerTest {
                 )
                 .andExpect(
                         jsonPath("$.imagemPerfil")
-                                .value(
-                                        "https://exemplo.com/perfil.jpg"
-                                )
+                                .value(nullValue())
                 )
                 .andExpect(
                         jsonPath("$.senha")
@@ -471,8 +465,7 @@ class UsuarioControllerTest {
                         1L,
                         "Isaque Costa da Cunha",
                         "isaque-collab",
-                        "isaque@gamevault.test",
-                        "https://exemplo.com/perfil.jpg"
+                        "isaque@gamevault.test"
                 );
     }
 
@@ -491,8 +484,7 @@ class UsuarioControllerTest {
                                     {
                                       "nome": "",
                                       "username": "isaque",
-                                      "email": "isaque@gamevault.test",
-                                      "imagemPerfil": null
+                                      "email": "isaque@gamevault.test"
                                     }
                                     """)
                 )
@@ -520,8 +512,7 @@ class UsuarioControllerTest {
                                     {
                                       "nome": "Isaque Costa",
                                       "username": "isaque",
-                                      "email": "email-invalido",
-                                      "imagemPerfil": null
+                                      "email": "email-invalido"
                                     }
                                     """)
                 )
@@ -549,8 +540,7 @@ class UsuarioControllerTest {
                                     {
                                       "nome": "Isaque Costa",
                                       "username": "",
-                                      "email": "isaque@gamevault.test",
-                                      "imagemPerfil": null
+                                      "email": "isaque@gamevault.test"
                                     }
                                     """)
                 )
@@ -572,8 +562,7 @@ class UsuarioControllerTest {
                         1L,
                         "Isaque Costa",
                         "username_existente",
-                        "isaque@gamevault.test",
-                        null
+                        "isaque@gamevault.test"
                 )
         ).thenThrow(
                 new UsernameJaCadastradoException(
@@ -592,8 +581,7 @@ class UsuarioControllerTest {
                                     {
                                       "nome": "Isaque Costa",
                                       "username": "username_existente",
-                                      "email": "isaque@gamevault.test",
-                                      "imagemPerfil": null
+                                      "email": "isaque@gamevault.test"
                                     }
                                     """)
                 )
@@ -617,8 +605,7 @@ class UsuarioControllerTest {
                         1L,
                         "Isaque Costa",
                         "isaque",
-                        "email.existente@gamevault.test",
-                        null
+                        "email.existente@gamevault.test"
                 )
         ).thenThrow(
                 new EmailJaCadastradoException(
@@ -637,8 +624,7 @@ class UsuarioControllerTest {
                                     {
                                       "nome": "Isaque Costa",
                                       "username": "isaque",
-                                      "email": "email.existente@gamevault.test",
-                                      "imagemPerfil": null
+                                      "email": "email.existente@gamevault.test"
                                     }
                                     """)
                 )

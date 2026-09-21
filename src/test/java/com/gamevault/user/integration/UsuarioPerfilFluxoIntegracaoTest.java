@@ -185,8 +185,7 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                     {
                                       "nome": "Usuário Perfil Atualizado",
                                       "username": "usuario_perfil_atualizado",
-                                      "email": "usuario.perfil.atualizado@gamevault.test",
-                                      "imagemPerfil": "https://exemplo.com/perfil.jpg"
+                                      "email": "usuario.perfil.atualizado@gamevault.test"
                                     }
                                     """)
                 )
@@ -210,12 +209,6 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                 .value(
                                         "usuario.perfil.atualizado@gamevault.test"
                                 )
-                )
-                .andExpect(
-                        jsonPath("$.imagemPerfil")
-                                .value(
-                                        "https://exemplo.com/perfil.jpg"
-                                )
                 );
 
         Usuario usuarioAtualizado =
@@ -233,10 +226,6 @@ class UsuarioPerfilFluxoIntegracaoTest {
                 () -> assertEquals(
                         "usuario_perfil_atualizado",
                         usuarioAtualizado.getUsername()
-                ),
-                () -> assertEquals(
-                        "https://exemplo.com/perfil.jpg",
-                        usuarioAtualizado.getProfileImageUrl()
                 )
         );
     }
@@ -255,8 +244,7 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                     {
                                       "nome": "Usuário",
                                       "username": "usuario",
-                                      "email": "usuario@gamevault.test",
-                                      "imagemPerfil": null
+                                      "email": "usuario@gamevault.test"
                                     }
                                     """)
                 )
@@ -297,8 +285,7 @@ class UsuarioPerfilFluxoIntegracaoTest {
                                     {
                                       "nome": "Usuário Perfil",
                                       "username": "usuario_perfil",
-                                      "email": "outro.perfil@gamevault.test",
-                                      "imagemPerfil": null
+                                      "email": "outro.perfil@gamevault.test"
                                     }
                                     """)
                 )

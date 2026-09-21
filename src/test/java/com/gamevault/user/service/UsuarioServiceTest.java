@@ -331,8 +331,7 @@ class UsuarioServiceTest {
                         1L,
                         "Novo Nome",
                         "novo_username",
-                        "novo@gamevault.test",
-                        "https://exemplo.com/foto.jpg"
+                        "novo@gamevault.test"
                 );
 
         assertAll(
@@ -351,10 +350,6 @@ class UsuarioServiceTest {
                 () -> assertEquals(
                         "novo@gamevault.test",
                         resultado.getEmail()
-                ),
-                () -> assertEquals(
-                        "https://exemplo.com/foto.jpg",
-                        resultado.getProfileImageUrl()
                 )
         );
 
@@ -372,6 +367,74 @@ class UsuarioServiceTest {
                         "novo@gamevault.test",
                         1L
                 );
+
+        verify(
+                usuarioRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void deveManterFotoAoAtualizarDadosPerfil() {
+
+        Usuario usuario = new Usuario();
+        usuario.setName("Nome Antigo");
+        usuario.setUsername("isaque");
+        usuario.setEmail(
+                "isaque@gamevault.test"
+        );
+        usuario.setProfileImageUrl(
+                "/api/usuarios/me/foto"
+        );
+
+        when(
+                usuarioRepository.findById(1L)
+        ).thenReturn(
+                Optional.of(usuario)
+        );
+
+        when(
+                usuarioRepository
+                        .existsByUsernameAndIdNot(
+                                "isaque",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        when(
+                usuarioRepository
+                        .existsByEmailAndIdNot(
+                                "isaque@gamevault.test",
+                                1L
+                        )
+        ).thenReturn(false);
+
+        Usuario resultado =
+                usuarioService.atualizarPerfil(
+                        1L,
+                        "Isaque Costa",
+                        "isaque",
+                        "isaque@gamevault.test"
+                );
+
+        assertAll(
+                () -> assertEquals(
+                        "Isaque Costa",
+                        resultado.getName()
+                ),
+                () -> assertEquals(
+                        "isaque",
+                        resultado.getUsername()
+                ),
+                () -> assertEquals(
+                        "isaque@gamevault.test",
+                        resultado.getEmail()
+                ),
+                () -> assertEquals(
+                        "/api/usuarios/me/foto",
+                        resultado.getProfileImageUrl()
+                )
+        );
 
         verify(
                 usuarioRepository,
@@ -416,8 +479,7 @@ class UsuarioServiceTest {
                         1L,
                         "Isaque Costa",
                         "isaque",
-                        "isaque@gamevault.test",
-                        null
+                        "isaque@gamevault.test"
                 );
 
         assertAll(
@@ -432,9 +494,6 @@ class UsuarioServiceTest {
                 () -> assertEquals(
                         "isaque@gamevault.test",
                         resultado.getEmail()
-                ),
-                () -> assertNull(
-                        resultado.getProfileImageUrl()
                 )
         );
 
@@ -486,8 +545,7 @@ class UsuarioServiceTest {
                         1L,
                         "Isaque",
                         "username_existente",
-                        "isaque@gamevault.test",
-                        null
+                        "isaque@gamevault.test"
                 )
         );
 
@@ -549,8 +607,7 @@ class UsuarioServiceTest {
                         1L,
                         "Isaque",
                         "isaque",
-                        "email.existente@gamevault.test",
-                        null
+                        "email.existente@gamevault.test"
                 )
         );
 
@@ -587,8 +644,7 @@ class UsuarioServiceTest {
                         1L,
                         "Novo Nome",
                         "novo_username",
-                        "novo@gamevault.test",
-                        null
+                        "novo@gamevault.test"
                 )
         );
 
