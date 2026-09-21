@@ -68,8 +68,7 @@ public class UsuarioController {
                         usuarioPrincipal.getId(),
                         requisicao.nome(),
                         requisicao.username(),
-                        requisicao.email(),
-                        requisicao.imagemPerfil()
+                        requisicao.email()
                 );
 
         return ResponseEntity.ok(

@@ -28,12 +28,6 @@ public record AtualizacaoPerfilRequisicao(
                 max = 150,
                 message = "O e-mail deve possuir no máximo 150 caracteres"
         )
-        String email,
-
-        @Size(
-                max = 500,
-                message = "A URL da imagem deve possuir no máximo 500 caracteres"
-        )
-        String imagemPerfil
+        String email
 ) {
 }

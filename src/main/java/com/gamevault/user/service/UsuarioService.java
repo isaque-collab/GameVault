@@ -87,8 +87,7 @@ public class UsuarioService {
             Long usuarioId,
             String nome,
             String username,
-            String email,
-            String imagemPerfil
+            String email
     ) {
         Usuario usuario = buscarPorId(usuarioId);
 
@@ -101,7 +100,6 @@ public class UsuarioService {
         usuario.setName(nome);
         usuario.setUsername(username);
         usuario.setEmail(email);
-        usuario.setProfileImageUrl(imagemPerfil);
 
         return usuario;
 
