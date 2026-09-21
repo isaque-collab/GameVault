@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class TratadorGlobalExcecoes {
@@ -141,6 +142,81 @@ public class TratadorGlobalExcecoes {
         );
 
         problema.setTitle("Integração RAWG indisponível");
+
+        return problema;
+    }
+
+    @ExceptionHandler(FotoPerfilInvalidaException.class)
+    public ProblemDetail tratarFotoPerfilInvalida(
+            FotoPerfilInvalidaException exception
+    ) {
+
+        ProblemDetail problema =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.BAD_REQUEST,
+                        exception.getMessage()
+                );
+
+        problema.setTitle(
+                "Foto de perfil inválida"
+        );
+
+        return problema;
+    }
+
+    @ExceptionHandler({
+            FotoPerfilMuitoGrandeException.class,
+            MaxUploadSizeExceededException.class
+    })
+    public ProblemDetail tratarFotoPerfilMuitoGrande(
+            Exception exception
+    ) {
+
+        ProblemDetail problema =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "A foto de perfil deve possuir no máximo 2 MB."
+                );
+
+        problema.setTitle(
+                "Foto de perfil muito grande"
+        );
+
+        return problema;
+    }
+
+    @ExceptionHandler(FotoPerfilNaoEncontradaException.class)
+    public ProblemDetail tratarFotoPerfilNaoEncontrada(
+            FotoPerfilNaoEncontradaException exception
+    ) {
+
+        ProblemDetail problema =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.NOT_FOUND,
+                        exception.getMessage()
+                );
+
+        problema.setTitle(
+                "Foto de perfil não encontrada"
+        );
+
+        return problema;
+    }
+
+    @ExceptionHandler(FotoPerfilArmazenamentoException.class)
+    public ProblemDetail tratarFalhaArmazenamentoFoto(
+            FotoPerfilArmazenamentoException exception
+    ) {
+
+        ProblemDetail problema =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Não foi possível processar a foto de perfil."
+                );
+
+        problema.setTitle(
+                "Falha no armazenamento da foto"
+        );
 
         return problema;
     }

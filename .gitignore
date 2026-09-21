@@ -4,6 +4,7 @@ target/
 !**/src/test/**/target/
 .env
 *.log
+/data/profile-images/
 
 ### STS ###
 .apt_generated

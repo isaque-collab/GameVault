@@ -16,7 +16,9 @@ public record UsuarioResposta(
                 usuario.getName(),
                 usuario.getUsername(),
                 usuario.getEmail(),
-                usuario.getProfileImageUrl()
+                usuario.getProfileImageUrl() == null
+                        ? null
+                        : "/api/usuarios/me/foto"
         );
     }
 }

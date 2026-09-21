@@ -24,6 +24,11 @@ spring:
       connect-timeout: 3s
       read-timeout: 10s
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
+
 rawg:
   base-url: https://api.rawg.io/api
   api-key: ${RAWG_API_KEY:}
@@ -31,3 +36,6 @@ rawg:
 gamevault:
   cors:
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+
+  profile-image:
+    directory: ${GAMEVAULT_PROFILE_IMAGE_DIRECTORY:./data/profile-images}
