@@ -1,5 +1,7 @@
 package com.gamevault.listadesejos.controller;
 
+import com.gamevault.jogo.dto.ItemColecaoJogoResposta;
+import com.gamevault.jogo.service.JogoColecaoService;
 import com.gamevault.listadesejos.dto.AdicionarItemListaDesejosRequisicao;
 import com.gamevault.listadesejos.dto.ItemListaDesejosResposta;
 import com.gamevault.listadesejos.entity.ItemListaDesejos;
@@ -18,11 +20,17 @@ import java.util.List;
 public class ListaDesejosController {
 
     private final ListaDesejosService listaDesejosService;
+    private final JogoColecaoService jogoColecaoService;
 
     public ListaDesejosController(
-            ListaDesejosService listaDesejosService
+            ListaDesejosService listaDesejosService,
+            JogoColecaoService jogoColecaoService
     ) {
-        this.listaDesejosService = listaDesejosService;
+        this.listaDesejosService =
+                listaDesejosService;
+
+        this.jogoColecaoService =
+                jogoColecaoService;
     }
 
     @PostMapping
@@ -43,20 +51,32 @@ public class ListaDesejosController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemListaDesejosResposta>> listar(
-            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal
+    public ResponseEntity<List<ItemColecaoJogoResposta>>
+    listar(
+            @AuthenticationPrincipal
+            UsuarioPrincipal usuarioPrincipal
     ) {
 
-        List<ItemListaDesejosResposta> itens =
+        List<ItemColecaoJogoResposta> itens =
                 listaDesejosService
                         .listar(
                                 usuarioPrincipal.getId()
                         )
                         .stream()
-                        .map(ItemListaDesejosResposta::de)
+                        .map(
+                                item ->
+                                        jogoColecaoService
+                                                .enriquecer(
+                                                        item.getId(),
+                                                        item.getRawgGameId(),
+                                                        item.getCreatedAt()
+                                                )
+                        )
                         .toList();
 
-        return ResponseEntity.ok(itens);
+        return ResponseEntity.ok(
+                itens
+        );
     }
 
     @DeleteMapping("/{rawgGameId}")

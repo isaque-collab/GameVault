@@ -5,6 +5,8 @@ import com.gamevault.favorito.dto.AdicionarFavoritoRequisicao;
 import com.gamevault.favorito.dto.FavoritoResposta;
 import com.gamevault.favorito.entity.Favorito;
 import com.gamevault.favorito.service.FavoritoService;
+import com.gamevault.jogo.dto.ItemColecaoJogoResposta;
+import com.gamevault.jogo.service.JogoColecaoService;
 import com.gamevault.user.security.UsuarioPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,15 @@ import java.util.List;
 public class FavoritoController {
 
     private final FavoritoService favoritoService;
+    private final JogoColecaoService jogoColecaoService;
 
-    public FavoritoController(FavoritoService favoritoService) {
+    public FavoritoController(
+            FavoritoService favoritoService,
+            JogoColecaoService jogoColecaoService
+    ) {
         this.favoritoService = favoritoService;
+        this.jogoColecaoService =
+                jogoColecaoService;
     }
 
     @PostMapping
@@ -43,20 +51,32 @@ public class FavoritoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<FavoritoResposta>> listarFavoritos(
-            @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal
+    public ResponseEntity<List<ItemColecaoJogoResposta>>
+    listarFavoritos(
+            @AuthenticationPrincipal
+            UsuarioPrincipal usuarioPrincipal
     ) {
 
-        List<FavoritoResposta> favoritos =
+        List<ItemColecaoJogoResposta> favoritos =
                 favoritoService
                         .listarFavoritos(
                                 usuarioPrincipal.getId()
                         )
                         .stream()
-                        .map(FavoritoResposta::de)
+                        .map(
+                                favorito ->
+                                        jogoColecaoService
+                                                .enriquecer(
+                                                        favorito.getId(),
+                                                        favorito.getRawgGameId(),
+                                                        favorito.getCreatedAt()
+                                                )
+                        )
                         .toList();
 
-        return ResponseEntity.ok(favoritos);
+        return ResponseEntity.ok(
+                favoritos
+        );
     }
 
     @DeleteMapping("/{rawgGameId}")
