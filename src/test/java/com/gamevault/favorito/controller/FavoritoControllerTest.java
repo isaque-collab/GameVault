@@ -4,6 +4,8 @@ import com.gamevault.favorito.entity.Favorito;
 import com.gamevault.favorito.exception.FavoritoJaExisteException;
 import com.gamevault.favorito.exception.FavoritoNaoEncontradoException;
 import com.gamevault.favorito.service.FavoritoService;
+import com.gamevault.jogo.dto.ItemColecaoJogoResposta;
+import com.gamevault.jogo.service.JogoColecaoService;
 import com.gamevault.shared.exception.TratadorGlobalExcecoes;
 import com.gamevault.user.security.UsuarioPrincipal;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,6 +35,9 @@ class FavoritoControllerTest {
 
     @MockitoBean
     private FavoritoService favoritoService;
+
+    @MockitoBean
+    private JogoColecaoService jogoColecaoService;
 
     @Test
     void deveAdicionarFavorito() throws Exception {
@@ -95,14 +101,26 @@ class FavoritoControllerTest {
     @Test
     void deveListarFavoritosDoUsuarioAutenticado()
             throws Exception {
+        Favorito favorito =
+                mock(Favorito.class);
 
-        Favorito favorito = mock(Favorito.class);
+        LocalDateTime criadoEm =
+                LocalDateTime.of(
+                        2026,
+                        9,
+                        21,
+                        20,
+                        0
+                );
 
         when(favorito.getId())
-                .thenReturn(1L);
+                .thenReturn(10L);
 
         when(favorito.getRawgGameId())
                 .thenReturn(3498L);
+
+        when(favorito.getCreatedAt())
+                .thenReturn(criadoEm);
 
         when(
                 favoritoService.listarFavoritos(1L)
@@ -110,22 +128,93 @@ class FavoritoControllerTest {
                 List.of(favorito)
         );
 
-        mockMvc.perform(
-                        get("/api/usuarios/me/favoritos")
-                                .with(user(usuarioPrincipal()))
+        ItemColecaoJogoResposta itemEnriquecido =
+                new ItemColecaoJogoResposta(
+                        10L,
+                        3498L,
+                        criadoEm,
+                        "Grand Theft Auto V",
+                        LocalDate.of(
+                                2013,
+                                9,
+                                17
+                        ),
+                        "imagem.jpg",
+                        4.47,
+                        92,
+                        true
+                );
+
+        when(
+                jogoColecaoService.enriquecer(
+                        10L,
+                        3498L,
+                        criadoEm
                 )
-                .andExpect(status().isOk())
+        ).thenReturn(
+                itemEnriquecido
+        );
+
+        mockMvc.perform(
+                        get(
+                                "/api/usuarios/me/favoritos"
+                        )
+                                .with(
+                                        user(
+                                                usuarioPrincipal()
+                                        )
+                                )
+                )
+                .andExpect(
+                        status().isOk()
+                )
                 .andExpect(
                         jsonPath("$[0].id")
-                                .value(1)
+                                .value(10)
                 )
                 .andExpect(
                         jsonPath("$[0].rawgGameId")
                                 .value(3498)
+                )
+                .andExpect(
+                        jsonPath("$[0].nome")
+                                .value(
+                                        "Grand Theft Auto V"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$[0].dataLancamento")
+                                .value(
+                                        "2013-09-17"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$[0].imagemFundo")
+                                .value("imagem.jpg")
+                )
+                .andExpect(
+                        jsonPath("$[0].notaRawg")
+                                .value(4.47)
+                )
+                .andExpect(
+                        jsonPath("$[0].metacritic")
+                                .value(92)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$[0].metadadosDisponiveis"
+                        ).value(true)
                 );
 
         verify(favoritoService)
                 .listarFavoritos(1L);
+
+        verify(jogoColecaoService)
+                .enriquecer(
+                        10L,
+                        3498L,
+                        criadoEm
+                );
     }
 
     @Test
@@ -239,6 +328,85 @@ class FavoritoControllerTest {
         verifyNoInteractions(
                 favoritoService
         );
+    }
+
+    @Test
+    void deveManterFavoritoQuandoMetadadosNaoEstiveremDisponiveis()
+            throws Exception {
+
+        Favorito favorito =
+                mock(Favorito.class);
+
+        LocalDateTime criadoEm =
+                LocalDateTime.of(
+                        2026,
+                        9,
+                        21,
+                        20,
+                        0
+                );
+
+        when(favorito.getId())
+                .thenReturn(10L);
+
+        when(favorito.getRawgGameId())
+                .thenReturn(3498L);
+
+        when(favorito.getCreatedAt())
+                .thenReturn(criadoEm);
+
+        when(
+                favoritoService.listarFavoritos(1L)
+        ).thenReturn(
+                List.of(favorito)
+        );
+
+        when(
+                jogoColecaoService.enriquecer(
+                        10L,
+                        3498L,
+                        criadoEm
+                )
+        ).thenReturn(
+                new ItemColecaoJogoResposta(
+                        10L,
+                        3498L,
+                        criadoEm,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        false
+                )
+        );
+
+        mockMvc.perform(
+                        get(
+                                "/api/usuarios/me/favoritos"
+                        )
+                                .with(
+                                        user(
+                                                usuarioPrincipal()
+                                        )
+                                )
+                )
+                .andExpect(
+                        status().isOk()
+                )
+                .andExpect(
+                        jsonPath("$[0].rawgGameId")
+                                .value(3498)
+                )
+                .andExpect(
+                        jsonPath("$[0].nome")
+                                .doesNotExist()
+                )
+                .andExpect(
+                        jsonPath(
+                                "$[0].metadadosDisponiveis"
+                        ).value(false)
+                );
     }
 
     private UsuarioPrincipal usuarioPrincipal() {

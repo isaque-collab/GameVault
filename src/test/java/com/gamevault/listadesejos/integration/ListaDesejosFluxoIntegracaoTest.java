@@ -1,6 +1,8 @@
 package com.gamevault.listadesejos.integration;
 
 import com.gamevault.favorito.repository.FavoritoRepository;
+import com.gamevault.jogo.dto.ItemColecaoJogoResposta;
+import com.gamevault.jogo.service.JogoColecaoService;
 import com.gamevault.listadesejos.repository.ItemListaDesejosRepository;
 import com.gamevault.user.entity.Usuario;
 import com.gamevault.user.repository.UsuarioRepository;
@@ -11,12 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -41,6 +48,9 @@ class ListaDesejosFluxoIntegracaoTest {
 
     @Autowired
     private FavoritoRepository favoritoRepository;
+
+    @MockitoBean
+    private JogoColecaoService jogoColecaoService;
 
     private Long usuarioId;
 
@@ -98,8 +108,39 @@ class ListaDesejosFluxoIntegracaoTest {
                         )
         );
 
+        var itemSalvo =
+                itemListaDesejosRepository
+                        .findAllByUsuarioId(usuarioId)
+                        .getFirst();
+
+        when(
+                jogoColecaoService.enriquecer(
+                        itemSalvo.getId(),
+                        itemSalvo.getRawgGameId(),
+                        itemSalvo.getCreatedAt()
+                )
+        ).thenReturn(
+                new ItemColecaoJogoResposta(
+                        itemSalvo.getId(),
+                        itemSalvo.getRawgGameId(),
+                        itemSalvo.getCreatedAt(),
+                        "Grand Theft Auto V",
+                        LocalDate.of(
+                                2013,
+                                9,
+                                17
+                        ),
+                        "imagem.jpg",
+                        4.47,
+                        92,
+                        true
+                )
+        );
+
         mockMvc.perform(
-                        get("/api/usuarios/me/lista-desejos")
+                        get(
+                                "/api/usuarios/me/lista-desejos"
+                        )
                                 .with(usuarioAutenticado())
                 )
                 .andExpect(
@@ -112,6 +153,28 @@ class ListaDesejosFluxoIntegracaoTest {
                 .andExpect(
                         jsonPath("$[0].rawgGameId")
                                 .value(3498)
+                )
+                .andExpect(
+                        jsonPath("$[0].nome")
+                                .value(
+                                        "Grand Theft Auto V"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$[0].imagemFundo")
+                                .value("imagem.jpg")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$[0].metadadosDisponiveis"
+                        ).value(true)
+                );
+
+        verify(jogoColecaoService)
+                .enriquecer(
+                        itemSalvo.getId(),
+                        itemSalvo.getRawgGameId(),
+                        itemSalvo.getCreatedAt()
                 );
 
         mockMvc.perform(

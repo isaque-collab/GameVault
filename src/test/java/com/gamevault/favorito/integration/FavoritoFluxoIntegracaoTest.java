@@ -1,6 +1,8 @@
 package com.gamevault.favorito.integration;
 
 import com.gamevault.favorito.repository.FavoritoRepository;
+import com.gamevault.jogo.dto.ItemColecaoJogoResposta;
+import com.gamevault.jogo.service.JogoColecaoService;
 import com.gamevault.user.entity.Usuario;
 import com.gamevault.user.repository.UsuarioRepository;
 import com.gamevault.user.security.UsuarioPrincipal;
@@ -10,10 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -37,6 +44,9 @@ class FavoritoFluxoIntegracaoTest {
 
     @Autowired
     private FavoritoRepository favoritoRepository;
+
+    @MockitoBean
+    private JogoColecaoService jogoColecaoService;
 
     private Long usuarioId;
 
@@ -90,6 +100,35 @@ class FavoritoFluxoIntegracaoTest {
                         )
         );
 
+        var favoritoSalvo =
+                favoritoRepository
+                        .findAllByUsuarioId(usuarioId)
+                        .getFirst();
+
+        when(
+                jogoColecaoService.enriquecer(
+                        favoritoSalvo.getId(),
+                        favoritoSalvo.getRawgGameId(),
+                        favoritoSalvo.getCreatedAt()
+                )
+        ).thenReturn(
+                new ItemColecaoJogoResposta(
+                        favoritoSalvo.getId(),
+                        favoritoSalvo.getRawgGameId(),
+                        favoritoSalvo.getCreatedAt(),
+                        "Grand Theft Auto V",
+                        LocalDate.of(
+                                2013,
+                                9,
+                                17
+                        ),
+                        "imagem.jpg",
+                        4.47,
+                        92,
+                        true
+                )
+        );
+
         mockMvc.perform(
                         get("/api/usuarios/me/favoritos")
                                 .with(usuarioAutenticado())
@@ -104,6 +143,36 @@ class FavoritoFluxoIntegracaoTest {
                 .andExpect(
                         jsonPath("$[0].rawgGameId")
                                 .value(3498)
+                )
+                .andExpect(
+                        jsonPath("$[0].nome")
+                                .value(
+                                        "Grand Theft Auto V"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$[0].imagemFundo")
+                                .value("imagem.jpg")
+                )
+                .andExpect(
+                        jsonPath("$[0].notaRawg")
+                                .value(4.47)
+                )
+                .andExpect(
+                        jsonPath("$[0].metacritic")
+                                .value(92)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$[0].metadadosDisponiveis"
+                        ).value(true)
+                );
+
+        verify(jogoColecaoService)
+                .enriquecer(
+                        favoritoSalvo.getId(),
+                        favoritoSalvo.getRawgGameId(),
+                        favoritoSalvo.getCreatedAt()
                 );
 
         mockMvc.perform(
