@@ -6,9 +6,11 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 
 > **Status:** em desenvolvimento
 >
-> **Etapa atual:** desenvolvimento Back-end — catálogo, Home e detalhes de jogos concluídos e validados.
+> **Back-end da V1:** concluído e validado.
 >
-> **Próximo foco:** revisão e fechamento dos requisitos restantes do back-end antes do início da camada de front-end.
+> **Etapa atual:** fechamento documental concluído; projeto preparado para início do front-end.
+>
+> **Próximo foco:** implementação da interface web consumindo os contratos já consolidados do back-end.
 
 ---
 
@@ -16,19 +18,20 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 
 * Cadastro e autenticação de usuários.
 * Gerenciamento da própria conta.
-* Perfil do usuário com imagem.
+* Perfil com upload, substituição, consulta e remoção de foto.
 * Catálogo público de jogos.
-* Busca de jogos por nome.
-* Filtros e ordenações do catálogo.
-* Listagem de jogos populares.
+* Busca por nome.
+* Filtros e ordenações.
+* Jogos populares.
 * Lançamentos recentes.
 * Jogos mais bem avaliados.
 * Detalhes completos dos jogos.
 * Favoritos.
 * Lista de Desejos.
-* Avaliação de jogos com notas de 1 a 5.
+* Avaliações de 1 a 5 estrelas.
 * Integração com a API RAWG.
-* Personalização dos detalhes do jogo para usuários autenticados.
+* Personalização dos detalhes para usuários autenticados.
+* Coleções pessoais enriquecidas com dados mínimos dos jogos para montagem de cards.
 
 ---
 
@@ -68,8 +71,6 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 
 O projeto segue uma arquitetura de **monólito modular por funcionalidade**.
 
-A estrutura é organizada principalmente em:
-
 ```text
 com.gamevault
 ├── avaliacao
@@ -88,7 +89,7 @@ com.gamevault
 └── user
 ```
 
-Cada funcionalidade utiliza, conforme necessário, uma estrutura semelhante a:
+Cada funcionalidade utiliza, conforme necessário:
 
 ```text
 Controller
@@ -102,11 +103,7 @@ Repository
 Entity
 ```
 
-As regras de negócio permanecem concentradas na camada de serviço, enquanto os controllers são responsáveis pela comunicação HTTP.
-
-A integração com a RAWG está isolada no módulo `rawg`. O módulo `jogo` consome essa integração e converte os contratos externos em DTOs próprios do GameVault.
-
-Dessa forma, os consumidores da API não dependem diretamente da estrutura retornada pela RAWG.
+As regras de negócio permanecem concentradas na camada de serviço. A integração com a RAWG fica isolada no módulo `rawg`, e o módulo `jogo` converte os contratos externos em DTOs próprios do GameVault.
 
 ---
 
@@ -114,13 +111,13 @@ Dessa forma, os consumidores da API não dependem diretamente da estrutura retor
 
 O catálogo completo de jogos **não é persistido localmente**.
 
-Os jogos são referenciados internamente pelo identificador fornecido pela RAWG:
+As relações próprias do GameVault utilizam:
 
 ```text
 rawgGameId
 ```
 
-O banco de dados do GameVault armazena apenas informações próprias da aplicação.
+como referência externa do jogo.
 
 As principais tabelas são:
 
@@ -131,38 +128,21 @@ wishlist
 reviews
 ```
 
-O Flyway controla a evolução do schema através de migrations versionadas.
-
-A migration inicial está localizada em:
-
-```text
-src/main/resources/db/migration/V1__create_initial_schema.sql
-```
-
-O Hibernate utiliza:
+O Flyway controla a evolução do schema e o Hibernate utiliza:
 
 ```yaml
 ddl-auto: validate
 ```
 
-Assim:
+Regras principais:
 
-* o Flyway controla o schema;
-* o Hibernate valida a compatibilidade das entidades com o banco;
-* alterações estruturais não são geradas automaticamente pelo Hibernate.
-
----
-
-## Regras de integridade
-
-* `username` deve ser único.
-* `email` deve ser único.
+* `username` e `email` são únicos.
 * Um jogo não pode aparecer duas vezes nos Favoritos do mesmo usuário.
-* Um jogo não pode aparecer duas vezes na Lista de Desejos do mesmo usuário.
-* Um usuário pode possuir apenas uma avaliação por jogo.
+* Um jogo não pode aparecer duas vezes na Wishlist do mesmo usuário.
+* Um usuário possui no máximo uma avaliação por jogo.
 * Avaliações aceitam notas inteiras de 1 a 5.
-* Um mesmo jogo pode estar simultaneamente nos Favoritos e na Lista de Desejos.
-* A exclusão de um usuário remove automaticamente seus Favoritos, itens da Lista de Desejos e Avaliações através de `ON DELETE CASCADE`.
+* O mesmo jogo pode estar simultaneamente em Favoritos e Wishlist.
+* A exclusão da conta remove os dados próprios relacionados.
 
 ---
 
@@ -170,302 +150,194 @@ Assim:
 
 O GameVault utiliza **autenticação baseada em sessão HTTP com Spring Security**.
 
-Após o login bem-sucedido, o servidor mantém a autenticação através da sessão e do cookie:
+Após o login, o servidor mantém a autenticação por sessão e pelo cookie:
 
 ```text
 JSESSIONID
 ```
 
-O usuário autenticado é representado internamente por:
-
-```java
-UsuarioPrincipal
-```
-
-Controllers que precisam identificar o usuário da sessão utilizam:
+Controllers privados utilizam:
 
 ```java
 @AuthenticationPrincipal UsuarioPrincipal usuarioPrincipal
 ```
 
-Os endpoints privados não recebem um `usuarioId` arbitrário fornecido pelo cliente.
-
-Exemplo:
-
-```text
-/api/usuarios/me/favoritos
-```
-
-em vez de:
-
-```text
-/api/usuarios/{usuarioId}/favoritos
-```
-
-Isso impede que um usuário tente acessar dados de outro usuário apenas alterando um identificador na URL.
-
----
+Os endpoints pessoais usam `/me`, evitando receber um `usuarioId` arbitrário fornecido pelo cliente.
 
 ## CSRF
 
-A proteção contra **CSRF** permanece habilitada.
-
-O cliente pode obter as informações do token através de:
+A proteção CSRF permanece habilitada.
 
 ```text
 GET /api/csrf
 ```
 
-Requisições que alteram estado, como `POST`, `PUT` e `DELETE`, devem utilizar um token CSRF válido quando aplicável.
+Operações que alteram estado devem enviar um token válido.
+
+## CORS
+
+O back-end possui CORS configurável para a origem do front-end e permite credenciais, requisito necessário para a autenticação por sessão em origens diferentes.
+
+Por padrão:
+
+```text
+http://localhost:5173
+```
+
+A origem pode ser alterada pela variável:
+
+```env
+FRONTEND_ORIGIN=http://localhost:5173
+```
+
+## Autenticação
+
+| Método | Endpoint           | Descrição           | Resposta         |
+| ------ | ------------------ | ------------------- | ---------------- |
+| `GET`  | `/api/csrf`        | Obtém o token CSRF  | `200 OK`         |
+| `POST` | `/api/auth/login`  | Autentica o usuário | `204 No Content` |
+| `POST` | `/api/auth/logout` | Encerra a sessão    | `204 No Content` |
 
 ---
 
-## Endpoints de autenticação
+# Usuários e perfil
 
-| Método | Endpoint           | Descrição                          | Resposta         |
-| ------ | ------------------ | ---------------------------------- | ---------------- |
-| `GET`  | `/api/csrf`        | Obtém as informações do token CSRF | `200 OK`         |
-| `POST` | `/api/auth/login`  | Autentica o usuário                | `204 No Content` |
-| `POST` | `/api/auth/logout` | Encerra a sessão autenticada       | `204 No Content` |
+## Recursos implementados
 
-O login utiliza:
-
-```text
-email
-senha
-```
-
-Credenciais inválidas resultam em:
-
-```text
-401 Unauthorized
-```
-
-O logout:
-
-* invalida a sessão;
-* limpa a autenticação;
-* remove o cookie `JSESSIONID`.
-
----
-
-# Usuários e gerenciamento de conta
-
-O módulo `user` implementa:
-
-```text
-user
-├── controller
-├── dto
-├── entity
-├── exception
-├── repository
-├── security
-└── service
-```
-
-## Regras implementadas
-
-* Cadastro de usuário.
-* Validação de username único.
-* Validação de e-mail único.
-* Validação e codificação da senha.
-* Consulta do próprio perfil.
-* Alteração de nome.
-* Alteração de username.
-* Alteração de e-mail.
-* Alteração da URL da imagem de perfil.
+* Cadastro.
+* Validação de username e e-mail únicos.
+* Codificação de senha.
+* Consulta e edição do próprio perfil.
 * Alteração de senha.
-* Validação da senha atual antes da troca.
-* Exclusão da própria conta.
+* Exclusão da conta.
 * Encerramento da sessão após exclusão.
-* Remoção automática dos dados relacionados.
+* Remoção dos dados relacionados.
+* Upload real de foto de perfil.
+* Substituição e remoção de foto.
+* Formatos aceitos: JPEG, PNG e WebP.
+* Limite da foto: 2 MB.
+* Armazenamento em filesystem na V1.
+* A chave física interna do arquivo não é exposta no contrato público.
 
 ## Endpoints
 
-| Método   | Endpoint                 | Descrição                 | Resposta         |
-| -------- | ------------------------ | ------------------------- | ---------------- |
-| `POST`   | `/api/usuarios`          | Cadastra um usuário       | `201 Created`    |
-| `GET`    | `/api/usuarios/me`       | Consulta o próprio perfil | `200 OK`         |
-| `PUT`    | `/api/usuarios/me`       | Atualiza o próprio perfil | `200 OK`         |
-| `PUT`    | `/api/usuarios/me/senha` | Altera a própria senha    | `204 No Content` |
-| `DELETE` | `/api/usuarios/me`       | Exclui a própria conta    | `204 No Content` |
-
-O cadastro é público.
-
-Os demais endpoints de gerenciamento exigem autenticação.
+| Método   | Endpoint                 | Descrição                        | Resposta         |
+| -------- | ------------------------ | -------------------------------- | ---------------- |
+| `POST`   | `/api/usuarios`          | Cadastra usuário                 | `201 Created`    |
+| `GET`    | `/api/usuarios/me`       | Consulta o perfil                | `200 OK`         |
+| `PUT`    | `/api/usuarios/me`       | Atualiza nome, username e e-mail | `200 OK`         |
+| `PUT`    | `/api/usuarios/me/senha` | Altera a senha                   | `204 No Content` |
+| `PUT`    | `/api/usuarios/me/foto`  | Define ou substitui a foto       | `200 OK`         |
+| `GET`    | `/api/usuarios/me/foto`  | Obtém a foto                     | `200 OK`         |
+| `DELETE` | `/api/usuarios/me/foto`  | Remove a foto                    | `204 No Content` |
+| `DELETE` | `/api/usuarios/me`       | Exclui a conta                   | `204 No Content` |
 
 ---
 
 # Favoritos
 
-A funcionalidade de Favoritos está concluída no back-end.
-
-## Regras implementadas
-
-* Adicionar um jogo aos Favoritos.
-* Listar os Favoritos do usuário autenticado.
-* Remover um jogo.
+* Adicionar.
+* Listar.
+* Remover.
 * Impedir duplicidade.
-* Retornar erro controlado quando o Favorito não existe.
-* Garantir a unicidade no banco.
 * Associar as operações ao usuário autenticado.
-* Consultar se determinado jogo está favoritado para composição do detalhe personalizado.
+* Consultar o estado para composição dos detalhes.
+* Enriquecer a listagem com dados mínimos do jogo para o card.
+* Preservar o vínculo quando os metadados externos estiverem indisponíveis.
 
-## Endpoints
-
-| Método   | Endpoint                                  | Descrição                      | Resposta         |
-| -------- | ----------------------------------------- | ------------------------------ | ---------------- |
-| `POST`   | `/api/usuarios/me/favoritos`              | Adiciona um jogo aos Favoritos | `201 Created`    |
-| `GET`    | `/api/usuarios/me/favoritos`              | Lista os Favoritos             | `200 OK`         |
-| `DELETE` | `/api/usuarios/me/favoritos/{rawgGameId}` | Remove um jogo dos Favoritos   | `204 No Content` |
+| Método   | Endpoint                                  | Descrição                    | Resposta         |
+| -------- | ----------------------------------------- | ---------------------------- | ---------------- |
+| `POST`   | `/api/usuarios/me/favoritos`              | Adiciona favorito            | `201 Created`    |
+| `GET`    | `/api/usuarios/me/favoritos`              | Lista favoritos enriquecidos | `200 OK`         |
+| `DELETE` | `/api/usuarios/me/favoritos/{rawgGameId}` | Remove favorito              | `204 No Content` |
 
 ---
 
 # Lista de Desejos
 
-A funcionalidade de Lista de Desejos está concluída no back-end.
-
-## Regras implementadas
-
-* Adicionar um jogo à Lista de Desejos.
-* Listar os jogos da Lista de Desejos.
-* Remover um jogo.
+* Adicionar.
+* Listar.
+* Remover.
 * Impedir duplicidade.
-* Retornar erro controlado quando o item não existe.
-* Garantir unicidade no banco.
-* Associar as operações ao usuário autenticado.
-* Permitir que um jogo esteja simultaneamente nos Favoritos e na Lista de Desejos.
-* Consultar se determinado jogo está na Lista de Desejos para composição do detalhe personalizado.
+* Permitir coexistência com Favoritos.
+* Associar operações ao usuário autenticado.
+* Consultar o estado para composição dos detalhes.
+* Enriquecer a listagem com dados mínimos do jogo para o card.
+* Preservar o vínculo quando a RAWG estiver indisponível.
 
-## Endpoints
+| Método   | Endpoint                                      | Descrição                | Resposta         |
+| -------- | --------------------------------------------- | ------------------------ | ---------------- |
+| `POST`   | `/api/usuarios/me/lista-desejos`              | Adiciona jogo            | `201 Created`    |
+| `GET`    | `/api/usuarios/me/lista-desejos`              | Lista itens enriquecidos | `200 OK`         |
+| `DELETE` | `/api/usuarios/me/lista-desejos/{rawgGameId}` | Remove jogo              | `204 No Content` |
 
-| Método   | Endpoint                                      | Descrição        | Resposta         |
-| -------- | --------------------------------------------- | ---------------- | ---------------- |
-| `POST`   | `/api/usuarios/me/lista-desejos`              | Adiciona um jogo | `201 Created`    |
-| `GET`    | `/api/usuarios/me/lista-desejos`              | Lista os jogos   | `200 OK`         |
-| `DELETE` | `/api/usuarios/me/lista-desejos/{rawgGameId}` | Remove um jogo   | `204 No Content` |
+## Coleções pessoais e falhas externas
+
+Favoritos e Wishlist persistem somente o vínculo próprio do GameVault. No `GET`, cada item pode ser enriquecido com dados mínimos da RAWG:
+
+```json
+{
+  "id": 10,
+  "rawgGameId": 3498,
+  "criadoEm": "2026-09-21T20:00:00",
+  "nome": "Grand Theft Auto V",
+  "dataLancamento": "2013-09-17",
+  "imagemFundo": "https://...",
+  "notaRawg": 4.47,
+  "metacritic": 92,
+  "metadadosDisponiveis": true
+}
+```
+
+Se os metadados não puderem ser obtidos, o vínculo continua retornando com:
+
+```text
+metadadosDisponiveis = false
+```
+
+Uma falha da RAWG não exclui o Favorito ou item da Wishlist.
 
 ---
 
 # Avaliações
 
-A funcionalidade de Avaliações está concluída no back-end.
-
-## Regras implementadas
-
 * Notas inteiras entre 1 e 5.
 * Uma avaliação por usuário e jogo.
-* Atualização da avaliação existente quando a nota é alterada.
-* Manutenção do mesmo registro durante a atualização.
-* Consulta da avaliação do usuário autenticado.
-* Remoção da avaliação.
-* Cálculo da média das avaliações de cada jogo.
-* Contagem da quantidade de avaliações.
-* Jogos sem avaliações possuem média ausente.
-* Rejeição de notas inválidas.
-* Associação das operações privadas ao usuário autenticado.
-* Integração da média, quantidade e avaliação individual aos detalhes do jogo.
+* Criação e atualização.
+* Consulta da própria avaliação.
+* Remoção.
+* Média e quantidade da comunidade GameVault.
+* Ausência de avaliações representada por média `null`, não por zero.
 
-## Endpoints
-
-| Método   | Endpoint                                    | Descrição                      | Resposta         |
-| -------- | ------------------------------------------- | ------------------------------ | ---------------- |
-| `PUT`    | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Cria ou atualiza uma avaliação | `200 OK`         |
-| `GET`    | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Consulta a própria avaliação   | `200 OK`         |
-| `DELETE` | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Remove a própria avaliação     | `204 No Content` |
-| `GET`    | `/api/jogos/{rawgGameId}/avaliacoes/resumo` | Consulta média e quantidade    | `200 OK`         |
-
-O resumo das avaliações é público.
-
-Um jogo sem avaliações locais é representado conceitualmente por:
-
-```json
-{
-  "rawgGameId": 3498,
-  "media": null,
-  "quantidade": 0
-}
-```
-
-A ausência de avaliações não é tratada como nota zero.
+| Método   | Endpoint                                    | Descrição                  | Resposta         |
+| -------- | ------------------------------------------- | -------------------------- | ---------------- |
+| `PUT`    | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Cria ou atualiza avaliação | `200 OK`         |
+| `GET`    | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Consulta avaliação própria | `200 OK`         |
+| `DELETE` | `/api/usuarios/me/avaliacoes/{rawgGameId}`  | Remove avaliação própria   | `204 No Content` |
+| `GET`    | `/api/jogos/{rawgGameId}/avaliacoes/resumo` | Média e quantidade         | `200 OK`         |
 
 ---
 
-# Catálogo e busca de jogos
+# Catálogo e Home
 
-O módulo `jogo` representa a camada pública do catálogo.
-
-Sua estrutura principal é:
-
-```text
-jogo
-├── controller
-│   └── JogoController
-├── dto
-│   ├── BuscaJogosResposta
-│   ├── FiltroCatalogoJogos
-│   ├── JogoDetalhesResposta
-│   ├── JogoResumoResposta
-│   ├── OrdenacaoJogo
-│   └── PlataformaJogoDetalhesResposta
-└── service
-    └── JogoService
-```
-
-O catálogo não retorna os DTOs externos da RAWG diretamente.
-
-O fluxo é:
-
-```text
-RAWG
-  ↓
-RawgClient
-  ↓
-JogoService
-  ↓
-DTO do GameVault
-  ↓
-JogoController
-```
-
----
-
-## Endpoint do catálogo
+## Catálogo
 
 ```text
 GET /api/jogos
 ```
 
-O endpoint é público.
+Filtros opcionais:
 
-Todos os filtros são opcionais, com exceção das validações aplicadas quando um parâmetro é efetivamente informado.
+* nome;
+* gênero;
+* plataforma;
+* desenvolvedora;
+* publicadora;
+* período de lançamento;
+* ordenação;
+* página.
 
-Parâmetros disponíveis:
-
-| Parâmetro          | Tipo    | Descrição                               |
-| ------------------ | ------- | --------------------------------------- |
-| `nome`             | texto   | Pesquisa pelo nome do jogo              |
-| `genero`           | texto   | Filtra pelo gênero                      |
-| `plataforma`       | inteiro | Filtra pelo identificador da plataforma |
-| `desenvolvedora`   | texto   | Filtra pela desenvolvedora              |
-| `publicadora`      | texto   | Filtra pela publicadora                 |
-| `lancamentoInicio` | data    | Início do período de lançamento         |
-| `lancamentoFim`    | data    | Fim do período de lançamento            |
-| `ordenacao`        | enum    | Define a ordenação                      |
-| `pagina`           | inteiro | Página solicitada, padrão `1`           |
-
-Exemplo:
-
-```text
-GET /api/jogos?nome=portal&genero=action&plataforma=4&ordenacao=METACRITIC&pagina=1
-```
-
----
-
-## Ordenações
-
-As ordenações disponíveis são:
+Ordenações:
 
 ```text
 POPULARIDADE
@@ -475,167 +347,49 @@ LANCAMENTO
 NOME
 ```
 
-O GameVault converte internamente essas opções para os parâmetros correspondentes da RAWG.
-
 A popularidade não utiliza divisão semanal ou mensal.
 
----
-
-## Regras do catálogo
-
-* `nome` é opcional.
-* Quando `nome` é informado, não pode conter apenas espaços.
-* A página padrão é `1`.
-* A página deve ser maior ou igual a `1`.
-* Cada consulta solicita até 20 resultados.
-* Uma consulta sem resultados retorna uma lista vazia.
-* O gênero é opcional.
-* A plataforma é opcional e deve possuir identificador maior ou igual a `1`.
-* Desenvolvedora e publicadora são opcionais.
-* O período de lançamento é opcional.
-* Quando as duas datas são informadas, o início não pode ser posterior ao fim.
-* A ordenação é opcional.
-* Os DTOs externos da RAWG não são expostos diretamente.
-
-Exemplo conceitual de resposta:
-
-```json
-{
-  "pagina": 1,
-  "totalResultados": 1,
-  "jogos": [
-    {
-      "rawgGameId": 4200,
-      "nome": "Portal 2",
-      "dataLancamento": "2011-04-18",
-      "imagemFundo": "https://exemplo.com/portal-2.jpg",
-      "notaRawg": 4.61,
-      "quantidadeAvaliacoesRawg": 6900,
-      "metacritic": 95
-    }
-  ]
-}
-```
-
----
-
-# Home
-
-O back-end disponibiliza três seções próprias para composição da Home.
-
-## Jogos populares
+## Home
 
 ```text
 GET /api/jogos/populares
-```
-
-A popularidade utiliza a ordenação de popularidade fornecida pela RAWG, sem divisão em período semanal ou mensal.
-
----
-
-## Lançamentos recentes
-
-```text
 GET /api/jogos/lancamentos-recentes
-```
-
-São considerados os lançamentos dos últimos **30 dias corridos**, incluindo o dia atual.
-
-A data atual é obtida através de um `Clock` injetável, permitindo testes determinísticos.
-
----
-
-## Jogos mais bem avaliados
-
-```text
 GET /api/jogos/mais-bem-avaliados
 ```
 
-A seção utiliza a avaliação da RAWG como critério de ordenação.
-
----
-
-## Paginação da Home
-
-As três seções aceitam:
-
-```text
-pagina
-```
-
-com valor padrão:
-
-```text
-1
-```
+Lançamentos recentes consideram os últimos 30 dias corridos.
 
 ---
 
 # Detalhes do jogo
 
-O endpoint:
-
 ```text
 GET /api/jogos/{rawgGameId}
 ```
 
-retorna os detalhes completos utilizados pela aplicação.
+O endpoint é público e combina dados RAWG com dados próprios do GameVault.
 
-Ele permanece público.
+Entre os dados externos estão:
 
-A resposta combina informações provenientes da RAWG com informações próprias do GameVault.
-
----
-
-## Dados provenientes da RAWG
-
-Entre os campos retornados estão:
-
-* identificador RAWG;
-* nome;
-* descrição;
-* data de lançamento;
-* imagem de fundo;
-* avaliação RAWG;
-* quantidade de avaliações RAWG;
-* Metacritic;
-* tempo médio de jogo;
+* nome e descrição;
+* lançamento e imagem;
+* avaliação RAWG e Metacritic;
 * classificação etária;
 * gêneros;
 * plataformas;
-* requisitos mínimos por plataforma;
-* requisitos recomendados por plataforma;
+* requisitos;
 * desenvolvedoras;
 * publicadoras;
 * screenshots.
 
-Screenshots marcadas pela RAWG como ocultas não são disponibilizadas no contrato público.
-
----
-
-## Dados provenientes do GameVault
-
-O detalhe também retorna:
+Dados públicos do GameVault:
 
 ```text
 mediaAvaliacoesGameVault
 quantidadeAvaliacoesGameVault
 ```
 
-Esses dados são públicos.
-
-Quando não existem avaliações:
-
-```text
-mediaAvaliacoesGameVault = null
-quantidadeAvaliacoesGameVault = 0
-```
-
----
-
-## Dados personalizados
-
-Quando existe um usuário autenticado, o mesmo endpoint também retorna:
+Quando autenticado, o mesmo endpoint também retorna:
 
 ```text
 minhaAvaliacao
@@ -643,73 +397,33 @@ favoritado
 naListaDesejos
 ```
 
-Exemplo conceitual:
+Para visitantes, os estados pessoais permanecem `null`.
 
-```json
-{
-  "minhaAvaliacao": 5,
-  "favoritado": true,
-  "naListaDesejos": false
-}
-```
+## Decisão de interface da V1
 
-Caso o usuário autenticado ainda não tenha avaliado o jogo:
+Na Home e no catálogo, os jogos aparecem como cards de descoberta.
 
 ```text
-minhaAvaliacao = null
+card
+  ↓ clique
+detalhes do jogo
 ```
 
-Para visitantes:
+As ações pessoais ficam na página de detalhes:
 
-```text
-minhaAvaliacao = null
-favoritado = null
-naListaDesejos = null
-```
+* adicionar/remover Favorito;
+* adicionar/remover Wishlist;
+* criar/alterar/remover avaliação.
 
-Assim, `false` mantém o significado de que um usuário autenticado realmente não marcou o jogo, enquanto `null` representa ausência de contexto de usuário.
+Biblioteca de Favoritos e Wishlist também permitem consultar e remover os respectivos itens.
 
 ---
 
-# Integração com a API RAWG
+# Integração RAWG
 
-A integração utiliza o cliente HTTP síncrono:
+A integração utiliza `RestClient`.
 
-```text
-RestClient
-```
-
-Essa escolha acompanha a arquitetura imperativa do projeto baseada em Spring MVC e Spring Data JPA.
-
-A estrutura é:
-
-```text
-rawg
-├── client
-│   └── RawgClient
-├── config
-│   ├── RawgConfig
-│   └── RawgProperties
-├── dto
-│   ├── RawgBuscaJogosResposta
-│   ├── RawgJogoDetalhesResposta
-│   ├── RawgJogoResumoResposta
-│   ├── RawgPlataformaJogoResposta
-│   ├── RawgReferenciaResposta
-│   ├── RawgRequisitosResposta
-│   ├── RawgScreenshotResposta
-│   └── RawgScreenshotsResposta
-└── exception
-    ├── JogoRawgNaoEncontradoException
-    ├── RawgApiKeyNaoConfiguradaException
-    └── RawgIntegracaoException
-```
-
----
-
-## Operações utilizadas
-
-O `RawgClient` realiza consultas equivalentes a:
+Operações externas principais:
 
 ```text
 GET /games
@@ -717,35 +431,7 @@ GET /games/{id}
 GET /games/{id}/screenshots
 ```
 
-A consulta de catálogo pode enviar dinamicamente parâmetros como:
-
-```text
-search
-page
-page_size
-genres
-platforms
-developers
-publishers
-dates
-ordering
-```
-
-Somente filtros efetivamente informados são adicionados à requisição.
-
----
-
-## Configuração
-
-A integração possui:
-
-* URL base configurável;
-* chave obtida através de `RAWG_API_KEY`;
-* timeout de conexão de 3 segundos;
-* timeout de leitura de 10 segundos;
-* validação da presença da chave antes da chamada externa.
-
-Configuração atual:
+Configuração:
 
 ```yaml
 rawg:
@@ -753,237 +439,83 @@ rawg:
   api-key: ${RAWG_API_KEY:}
 ```
 
----
+A integração possui timeout de conexão de 3 segundos e leitura de 10 segundos.
 
-## Tratamento de falhas
-
-O cliente trata explicitamente:
+São tratados:
 
 * jogo não encontrado;
-* chave da API ausente;
+* chave ausente;
 * erros HTTP;
-* resposta sem corpo;
-* resposta estruturalmente inválida;
+* corpo ausente;
+* resposta inválida;
 * falhas de comunicação;
-* parâmetros inválidos de catálogo.
+* parâmetros inválidos.
 
-Os principais erros externos são convertidos pela API em:
+---
+
+# Tratamento global de erros
+
+A API utiliza `@RestControllerAdvice` e `ProblemDetail`.
+
+Entre os status utilizados:
 
 ```text
+400 Bad Request
+401 Unauthorized
 404 Not Found
+409 Conflict
+413 Payload Too Large
 502 Bad Gateway
 503 Service Unavailable
 ```
 
 ---
 
-# Tratamento global de erros
-
-A aplicação utiliza:
-
-```java
-@RestControllerAdvice
-```
-
-e respostas baseadas em:
-
-```text
-ProblemDetail
-```
-
-Entre os cenários tratados estão:
-
-* recurso inexistente — `404 Not Found`;
-* dados de usuário duplicados — `409 Conflict`;
-* Favorito duplicado — `409 Conflict`;
-* item duplicado na Lista de Desejos — `409 Conflict`;
-* senha inválida — `400 Bad Request`;
-* avaliação inválida — `400 Bad Request`;
-* parâmetros inválidos — `400 Bad Request`;
-* falha de comunicação com a RAWG — `502 Bad Gateway`;
-* chave RAWG ausente — `503 Service Unavailable`;
-* acesso sem autenticação — `401 Unauthorized`.
-
----
-
 # Estratégia de testes
 
-O projeto utiliza testes de diferentes níveis.
+A V1 possui testes em múltiplos níveis:
 
-## Testes de persistência
-
-Validam, entre outros pontos:
-
-* persistência de usuários;
-* unicidade;
-* relacionamentos;
-* Favoritos duplicados;
-* itens duplicados na Lista de Desejos;
-* avaliações duplicadas;
-* intervalo permitido das notas;
-* agregações das avaliações.
-
----
-
-## Testes unitários
-
-Os serviços são testados com JUnit 5 e Mockito.
-
-São cobertos cenários relacionados a:
+## Persistência
 
 * usuários;
-* senhas;
-* perfil;
+* unicidade;
 * Favoritos;
-* Lista de Desejos;
-* Avaliações;
-* catálogo;
-* filtros;
-* ordenação;
-* Home;
-* detalhes dos jogos;
-* dados personalizados por usuário;
-* conversão dos contratos da RAWG.
+* Wishlist;
+* avaliações;
+* constraints;
+* agregações.
 
----
+## Unitários
 
-## Testes MVC
+* usuário e senha;
+* foto de perfil;
+* Favoritos e Wishlist;
+* avaliações;
+* catálogo e Home;
+* detalhes;
+* enriquecimento de coleções;
+* integração RAWG.
 
-Os controllers são testados com MockMvc.
+## MVC
 
-São validados:
-
-* status HTTP;
 * contratos JSON;
-* validação de parâmetros;
-* tratamento de exceções;
-* autenticação;
-* autorização;
+* status HTTP;
+* validações;
+* segurança;
 * CSRF;
-* utilização de `UsuarioPrincipal`;
-* endpoints públicos;
-* endpoints privados;
-* Home;
-* catálogo;
-* detalhes públicos;
-* detalhes personalizados para usuário autenticado;
-* respostas `404`, `502` e `503`.
+* endpoints públicos e privados;
+* foto de perfil;
+* catálogo, Home e detalhes;
+* Favoritos, Wishlist e avaliações;
+* respostas de erro.
 
----
+## RAWG
 
-## Testes do cliente RAWG
+O `RawgClient` é testado com `MockRestServiceServer`, sem depender da API real durante a suíte automatizada.
 
-O `RawgClient` é testado com:
+## Integração
 
-```text
-MockRestServiceServer
-```
-
-Nenhuma chamada real à RAWG é necessária durante a suíte automatizada.
-
-São cobertos:
-
-* consulta por ID;
-* busca paginada;
-* filtros;
-* ordenações;
-* envio da chave;
-* desserialização;
-* campos desconhecidos;
-* detalhes expandidos;
-* plataformas e requisitos;
-* screenshots;
-* jogo inexistente;
-* erros HTTP;
-* respostas inválidas;
-* respostas sem corpo;
-* chave ausente;
-* falhas de comunicação.
-
----
-
-## Testes de integração
-
-Os testes de integração carregam o contexto completo do Spring e utilizam o MySQL real do ambiente de desenvolvimento.
-
-O fluxo validado percorre:
-
-```text
-HTTP
- ↓
-Spring Security
- ↓
-Controller
- ↓
-Service
- ↓
-Repository
- ↓
-MySQL
-```
-
-Os fluxos já cobertos incluem:
-
-### Autenticação
-
-* cadastro;
-* login;
-* criação da sessão;
-* credenciais inválidas;
-* endpoints protegidos;
-* logout;
-* invalidação da sessão;
-* CSRF.
-
-### Perfil
-
-* consulta;
-* atualização;
-* persistência;
-* proteção contra acesso não autenticado.
-
-### Alteração de senha
-
-* validação da senha atual;
-* geração do novo hash;
-* rejeição da senha anterior;
-* autenticação com a nova senha.
-
-### Exclusão de conta
-
-* remoção do usuário;
-* remoção de Favoritos;
-* remoção da Lista de Desejos;
-* remoção das Avaliações;
-* `ON DELETE CASCADE`;
-* invalidação da sessão.
-
-### Favoritos
-
-* adição;
-* listagem;
-* remoção;
-* duplicidade;
-* associação ao usuário autenticado.
-
-### Lista de Desejos
-
-* adição;
-* listagem;
-* remoção;
-* duplicidade;
-* associação ao usuário autenticado;
-* coexistência com Favoritos.
-
-### Avaliações
-
-* criação;
-* atualização;
-* consulta;
-* média;
-* quantidade;
-* remoção;
-* associação ao usuário autenticado.
+Os fluxos de integração carregam o contexto Spring e utilizam o MySQL do ambiente de desenvolvimento, cobrindo autenticação, perfil, senha, exclusão, foto, Favoritos, Wishlist e avaliações.
 
 ---
 
@@ -992,46 +524,39 @@ Os fluxos já cobertos incluem:
 A suíte completa pode ser executada com:
 
 ```powershell
-mvn clean test
+mvn test
 ```
 
-Última validação completa:
+No fechamento do back-end da V1, a suíte completa foi executada com:
 
 ```text
-Tests run: 193
 Failures: 0
 Errors: 0
-Skipped: 0
 
 BUILD SUCCESS
 ```
 
-O repositório também foi validado sem alterações pendentes após a conclusão do bloco de detalhes de jogos.
+O `git status --short` também foi confirmado sem alterações pendentes após os commits funcionais e de testes do fechamento.
 
 ---
 
 # Executando o banco com Docker
 
-Crie um arquivo `.env` na raiz do projeto:
+Crie `.env` na raiz:
 
 ```env
 MYSQL_ROOT_PASSWORD=sua_senha_root
 MYSQL_USER=seu_usuario
 MYSQL_PASSWORD=sua_senha
+RAWG_API_KEY=sua_chave
+FRONTEND_ORIGIN=http://localhost:5173
+GAMEVAULT_PROFILE_IMAGE_DIRECTORY=./data/profile-images
 ```
-
-O arquivo `.env` não deve ser versionado.
 
 Suba o banco:
 
 ```bash
 docker compose up -d
-```
-
-Verifique:
-
-```bash
-docker ps
 ```
 
 Para interromper:
@@ -1040,57 +565,13 @@ Para interromper:
 docker compose stop
 ```
 
-Para iniciar novamente:
-
-```bash
-docker compose start
-```
-
-Para remover os containers sem apagar os volumes:
+Para remover containers sem apagar volumes:
 
 ```bash
 docker compose down
 ```
 
-O comando:
-
-```bash
-docker compose down -v
-```
-
-também remove os volumes e apaga os dados armazenados.
-
----
-
-# Configuração da aplicação
-
-A conexão com o MySQL utiliza:
-
-```text
-host: localhost
-porta: 3306
-database: gamevault
-```
-
-O host e a porta podem ser alterados por:
-
-```env
-DB_HOST=localhost
-DB_PORT=3306
-```
-
-As credenciais são fornecidas por:
-
-```env
-MYSQL_USER=seu_usuario
-MYSQL_PASSWORD=sua_senha
-```
-
-A integração com a RAWG utiliza:
-
-```env
-RAWG_API_KEY=sua_chave
-```
+> `docker compose down -v` também remove os volumes e apaga os dados armazenados.
 
 Nunca versione credenciais reais nem o arquivo `.env`.
 
@@ -1098,132 +579,39 @@ Nunca versione credenciais reais nem o arquivo `.env`.
 
 # Estado atual do desenvolvimento
 
-## Infraestrutura
+## Back-end da V1
 
-* Java 21.
-* Spring Boot.
-* Maven.
-* MySQL 8.4.
-* Docker.
-* Docker Compose.
-* Flyway.
-* Migration inicial.
-* JPA.
-* Tratamento global de exceções.
+**Concluído e validado.**
 
-## Segurança
+Inclui:
 
-* Spring Security.
-* Autenticação baseada em sessão.
-* Login.
-* Logout.
-* `UsuarioPrincipal`.
-* Proteção dos endpoints privados.
-* CSRF.
-
-## Usuários
-
-* Cadastro.
-* Perfil.
-* Atualização dos dados.
-* Alteração de senha.
-* Exclusão da conta.
-* Remoção em cascata dos dados relacionados.
-
-## Favoritos
-
-* Adição.
-* Listagem.
-* Remoção.
-* Prevenção de duplicidade.
-* Integração com os detalhes do jogo.
-
-## Lista de Desejos
-
-* Adição.
-* Listagem.
-* Remoção.
-* Prevenção de duplicidade.
-* Coexistência com Favoritos.
-* Integração com os detalhes do jogo.
-
-## Avaliações
-
-* Criação e atualização.
-* Consulta.
-* Remoção.
-* Média.
-* Quantidade.
-* Notas de 1 a 5.
-* Uma avaliação por usuário e jogo.
-* Resumo público.
-* Integração com os detalhes do jogo.
-
-## Catálogo de jogos
-
-* Busca opcional por nome.
-* Paginação.
-* Filtro por gênero.
-* Filtro por plataforma.
-* Filtro por desenvolvedora.
-* Filtro por publicadora.
-* Filtro por período de lançamento.
-* Ordenação por popularidade.
-* Ordenação por avaliação RAWG.
-* Ordenação por Metacritic.
-* Ordenação por lançamento.
-* Ordenação por nome.
-
-## Home
-
-* Jogos populares.
-* Lançamentos recentes.
-* Jogos mais bem avaliados.
-
-## Detalhes de jogos
-
-* Informações expandidas da RAWG.
-* Classificação etária.
-* Gêneros.
-* Plataformas.
-* Requisitos.
-* Desenvolvedoras.
-* Publicadoras.
-* Screenshots.
-* Avaliações do GameVault.
-* Favoritos.
-* Lista de Desejos.
-* Personalização para usuário autenticado.
-* Acesso público para visitantes.
-
-## Integração RAWG
-
-* `RestClient`.
-* Consulta de catálogo.
-* Consulta por ID.
-* Consulta de screenshots.
-* Filtros.
-* Ordenação.
-* Paginação.
-* Timeouts.
-* Tratamento de falhas.
-* Proteção da API key.
-
-## Validação
-
-* 193 testes automatizados.
-* 0 falhas.
-* 0 erros.
-* `BUILD SUCCESS`.
+* infraestrutura e persistência;
+* autenticação e segurança;
+* usuário e perfil;
+* foto de perfil;
+* Favoritos;
+* Wishlist;
+* avaliações;
+* catálogo;
+* Home;
+* detalhes;
+* integração RAWG;
+* tratamento de erros;
+* CORS e CSRF;
+* coleções pessoais enriquecidas;
+* testes automatizados em múltiplos níveis.
 
 ---
 
 # Próximos passos
 
-* Revisar os requisitos restantes do back-end.
-* Identificar eventuais funcionalidades ainda não implementadas na V1.
-* Atualizar a documentação principal após o fechamento do back-end.
-* Iniciar a camada de front-end somente após a conclusão e validação da etapa atual.
+* Iniciar a implementação do front-end.
+* Consumir os contratos consolidados do back-end.
+* Implementar Home e catálogo com cards que abrem os detalhes.
+* Implementar login, cadastro e perfil.
+* Implementar ações pessoais na página de detalhes.
+* Implementar Biblioteca de Favoritos e Wishlist.
+* Manter o README e a documentação sincronizados ao final de cada bloco.
 
 ---
 
