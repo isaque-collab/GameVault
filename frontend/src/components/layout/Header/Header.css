@@ -1,0 +1,36 @@
+.header {
+    width: 100%;
+    border-bottom: 1px solid #d9d9d9;
+}
+
+.header_content {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 24px;
+}
+
+.header_logo {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.header_navigation {
+    display: flex;
+    gap: 24px;
+}
+
+.header_actions {
+    margin-left: auto;
+}
+
+.header_link {
+    padding: 8px 0;
+}
+
+.header_link--active {
+    font-weight: 700;
+}
