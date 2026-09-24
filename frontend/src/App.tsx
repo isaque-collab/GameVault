@@ -1,10 +1,11 @@
-import { Route, Routes } from 'react-router'
+import {Route, Routes} from 'react-router'
 import Header from './components/layout/Header/Header';
 import FavoritosPage from './pages/Favoritos/FavoritosPage.tsx';
 import HomePage from "./pages/Home/HomePage.tsx";
 import ListaDesejosPage from './pages/ListaDesejos/ListaDesejosPage.tsx';
 import LoginPage from './pages/Login/LoginPage.tsx';
 import NotFoundPage from './pages/NotFound/NotFoundPage.tsx';
+import JogoDetalhesPage from './pages/JogoDetalhes/JogoDetalhesPage.tsx';
 
 function App() {
     return (
@@ -12,11 +13,15 @@ function App() {
             <Header/>
 
             <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="favoritos" element={<FavoritosPage />} />
-                <Route path="/lista-desejos" element={<ListaDesejosPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="*" element={<NotFoundPage />} />
+                <Route path="/" element={<HomePage/>}/>
+                <Route path="favoritos" element={<FavoritosPage/>}/>
+                <Route path="/lista-desejos" element={<ListaDesejosPage/>}/>
+                <Route path="/login" element={<LoginPage/>}/>
+                <Route
+                    path="/jogos/:rawgGameId"
+                    element={<JogoDetalhesPage/>}
+                />
+                <Route path="*" element={<NotFoundPage/>}/>
             </Routes>
         </>
     )

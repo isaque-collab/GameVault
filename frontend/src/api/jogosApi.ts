@@ -1,4 +1,7 @@
-import type {BuscaJogosResposta} from '../types/jogo.ts';
+import type {
+    BuscaJogosResposta,
+    JogoDetalhes,
+} from '../types/jogo.ts';
 import apiFetch from './http.ts';
 
 export function buscarJogosPopulares(
@@ -22,5 +25,13 @@ export function buscarJogosMaisBemAvaliados(
 ): Promise<BuscaJogosResposta> {
     return apiFetch<BuscaJogosResposta>(
         `/jogos/mais-bem-avaliados?pagina=${pagina}`,
+    )
+}
+
+export function buscarDetalhesJogo(
+    rawgGameId: number,
+): Promise<JogoDetalhes> {
+    return apiFetch<JogoDetalhes>(
+        `/jogos/${rawgGameId}`,
     )
 }

@@ -23,6 +23,7 @@ function GameSection({titulo, jogos }: GameSectionProps) {
                 {jogos.map((jogo) => (
                     <GameCard
                         key={jogo.id}
+                        id={jogo.id}
                         nome={jogo.nome}
                         imagemUrl={jogo.imagemUrl}
                         avaliacao={jogo.avaliacao}
