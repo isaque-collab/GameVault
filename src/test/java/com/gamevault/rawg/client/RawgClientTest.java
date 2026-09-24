@@ -899,14 +899,14 @@ class RawgClientTest {
                   "image": "https://exemplo.com/screenshot-1.jpg",
                   "width": 1920,
                   "height": 1080,
-                  "hidden": false
+                  "is_deleted": false
                 },
                 {
                   "id": 2,
                   "image": "https://exemplo.com/screenshot-2.jpg",
                   "width": 1920,
                   "height": 1080,
-                  "hidden": true
+                  "is_deleted": true
                 }
               ]
             }

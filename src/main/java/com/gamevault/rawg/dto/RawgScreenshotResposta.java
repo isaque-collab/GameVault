@@ -8,7 +8,7 @@ public record RawgScreenshotResposta(
 
         String image,
 
-        @JsonProperty("hidden")
+        @JsonProperty("is_deleted")
         boolean oculto
 ) {
 }
