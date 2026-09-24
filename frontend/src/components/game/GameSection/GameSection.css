@@ -1,0 +1,14 @@
+.game-section {
+    margin-top: 32px;
+}
+
+.game-section_title {
+    margin: 0 0 16px;
+    font-size: 24px;
+}
+
+.game-section_games {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
