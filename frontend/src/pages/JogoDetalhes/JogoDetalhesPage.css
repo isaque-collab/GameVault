@@ -40,3 +40,25 @@
 .jogo-detalhes__acoes button:disabled {
     cursor: not-allowed;
 }
+
+.jogo-detalhes_avaliacao {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.jogo-detalhes_avaliacao input {
+    width: 100px;
+    padding: 10px 12px;
+}
+
+.jogo-detalhes_avaliacao button {
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.jogo-detalhes_avaliacao button:disabled {
+    cursor: not-allowed;
+}
