@@ -1,4 +1,5 @@
 import apiFetch from './http.ts';
+import type { ItemColecaoJogo } from '../types/jogo.ts';
 
 export function adicionarFavorito(
     rawgGameId: number,
@@ -47,5 +48,17 @@ export function removerListaDesejos(
         {
             method: 'DELETE',
         },
+    )
+}
+
+export function listarFavoritos(): Promise<ItemColecaoJogo[]> {
+    return apiFetch<ItemColecaoJogo[]>(
+        '/usuarios/me/favoritos',
+    )
+}
+
+export function listarListaDesejos(): Promise<ItemColecaoJogo[]> {
+    return apiFetch<ItemColecaoJogo[]>(
+        '/usuarios/me/lista-desejos',
     )
 }

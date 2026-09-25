@@ -48,3 +48,17 @@ export type JogoDetalhes = {
     publicadoras: string[]
     screenshots: string[]
 }
+
+export type ItemColecaoJogo = {
+    id: number
+    rawgGameId: number
+    criadoEm: string
+
+    nome: string | null
+    dataLancamento: string | null
+    imagemFundo: string | null
+    notaRawg: number | null
+    metacritic: number | null
+
+    metadadosDisponiveis: boolean
+}
