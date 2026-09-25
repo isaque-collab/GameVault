@@ -1,0 +1,21 @@
+.login {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 48px 24px;
+}
+
+.login_form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.login_field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.login_field input {
+    padding: 10px 12px;
+}

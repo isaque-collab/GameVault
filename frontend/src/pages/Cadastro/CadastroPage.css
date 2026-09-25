@@ -1,0 +1,21 @@
+.cadastro {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 48px 24px;
+}
+
+.cadastro_form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cadastro_field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cadastro_field input {
+    padding: 10px 12px;
+}

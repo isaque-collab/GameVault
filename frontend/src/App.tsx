@@ -6,6 +6,7 @@ import ListaDesejosPage from './pages/ListaDesejos/ListaDesejosPage.tsx';
 import LoginPage from './pages/Login/LoginPage.tsx';
 import NotFoundPage from './pages/NotFound/NotFoundPage.tsx';
 import JogoDetalhesPage from './pages/JogoDetalhes/JogoDetalhesPage.tsx';
+import CadastroPage from './pages/Cadastro/CadastroPage.tsx';
 
 function App() {
     return (
@@ -20,6 +21,10 @@ function App() {
                 <Route
                     path="/jogos/:rawgGameId"
                     element={<JogoDetalhesPage/>}
+                />
+                <Route
+                    path="/cadastro"
+                    element={<CadastroPage/>}
                 />
                 <Route path="*" element={<NotFoundPage/>}/>
             </Routes>
