@@ -2,6 +2,12 @@ import {useEffect, useState} from 'react'
 import {useParams} from 'react-router'
 import {buscarDetalhesJogo} from '../../api/jogosApi.ts'
 import type {JogoDetalhes} from '../../types/jogo.ts'
+import {
+    adicionarFavorito,
+    adicionarListaDesejos,
+    removerFavorito,
+    removerListaDesejos,
+} from '../../api/colecoesApi.ts'
 import './JogoDetalhesPage.css'
 
 function JogoDetalhesPage() {
@@ -10,6 +16,15 @@ function JogoDetalhesPage() {
     const [jogo, setJogo] = useState<JogoDetalhes | null>(null)
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
+
+    const [processandoFavorito, setProcessandoFavorito] =
+        useState(false)
+
+    const [processandoListaDesejos, setProcessandoListaDesejos] =
+        useState(false)
+
+    const [erroAcao, setErroAcao] =
+        useState<string | null>(null)
 
     useEffect(() => {
         async function carregarJogo() {
@@ -39,6 +54,76 @@ function JogoDetalhesPage() {
         carregarJogo()
     }, [rawgGameId])
 
+    async function alternarFavorito() {
+        if (!jogo || jogo.favoritado === null) {
+            return
+        }
+
+        const novoEstado = !jogo.favoritado
+
+        try {
+            setProcessandoFavorito(true)
+            setErroAcao(null)
+
+            if (jogo.favoritado) {
+                await removerFavorito(jogo.rawgGameId)
+            } else {
+                await adicionarFavorito(jogo.rawgGameId)
+            }
+
+            setJogo((jogoAtual) =>
+                jogoAtual
+                    ? {
+                        ...jogoAtual,
+                        favoritado: novoEstado,
+                    }
+                    : jogoAtual,
+            )
+        } catch (error) {
+            console.error(error)
+            setErroAcao(
+                'Não foi possível atualizar os favoritos.',
+            )
+        } finally {
+            setProcessandoFavorito(false)
+        }
+    }
+
+    async function alternarListaDesejos() {
+        if (!jogo || jogo.naListaDesejos === null) {
+            return
+        }
+
+        const novoEstado = !jogo.naListaDesejos
+
+        try {
+            setProcessandoListaDesejos(true)
+            setErroAcao(null)
+
+            if (jogo.naListaDesejos) {
+                await removerListaDesejos(jogo.rawgGameId)
+            } else {
+                await adicionarListaDesejos(jogo.rawgGameId)
+            }
+
+            setJogo((jogoAtual) =>
+                jogoAtual
+                    ? {
+                        ...jogoAtual,
+                        naListaDesejos: novoEstado,
+                    }
+                    : jogoAtual,
+            )
+        } catch (error) {
+            console.error(error)
+            setErroAcao(
+                'Não foi possível atualizar a lista de desejos.',
+            )
+        } finally {
+            setProcessandoListaDesejos(false)
+        }
+    }
+
     if (carregando) {
         return (
             <main className="jogo-detalhes">
@@ -58,6 +143,10 @@ function JogoDetalhesPage() {
     if (!jogo) {
         return null
     }
+
+    const usuarioAutenticado =
+        jogo.favoritado !== null &&
+        jogo.naListaDesejos !== null
 
     return (
         <main className="jogo-detalhes">
@@ -105,6 +194,74 @@ function JogoDetalhesPage() {
                     {jogo.classificacaoEtaria}
                 </p>
             )}
+
+            <section>
+                <h2>GameVault</h2>
+
+                {jogo.quantidadeAvaliacoesGameVault > 0 ? (
+                    <>
+                        <p>
+                            <strong>Avaliação dos usuários:</strong>{' '}
+                            {jogo.mediaAvaliacoesGameVault}
+                        </p>
+
+                        <p>
+                            <strong>Quantidade de avaliações:</strong>{' '}
+                            {jogo.quantidadeAvaliacoesGameVault}
+                        </p>
+                    </>
+                ) : (
+                    <p>Este jogo ainda não possui avaliações no GameVault.</p>
+                )}
+
+                {usuarioAutenticado ? (
+                    <>
+                        <p>
+                            <strong>Minha avaliação:</strong>{' '}
+                            {jogo.minhaAvaliacao !== null
+                                ? jogo.minhaAvaliacao
+                                : 'Ainda não avaliado'}
+                        </p>
+
+                        <div className="jogo-detalhes__acoes">
+                            <button
+                                type="button"
+                                onClick={alternarFavorito}
+                                disabled={processandoFavorito}
+                            >
+                                {processandoFavorito
+                                    ? 'Atualizando...'
+                                    : jogo.favoritado
+                                        ? 'Remover dos favoritos'
+                                        : 'Adicionar aos favoritos'}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={alternarListaDesejos}
+                                disabled={processandoListaDesejos}
+                            >
+                                {processandoListaDesejos
+                                    ? 'Atualizando...'
+                                    : jogo.naListaDesejos
+                                        ? 'Remover da lista de desejos'
+                                        : 'Adicionar à lista de desejos'}
+                            </button>
+                        </div>
+
+                        {erroAcao && (
+                            <p role="alert">
+                                {erroAcao}
+                            </p>
+                        )}
+                    </>
+                ) : (
+                    <p>
+                        Entre na sua conta para favoritar, adicionar à lista de desejos
+                        e avaliar este jogo.
+                    </p>
+                )}
+            </section>
 
             {jogo.generos.length > 0 && (
                 <section>

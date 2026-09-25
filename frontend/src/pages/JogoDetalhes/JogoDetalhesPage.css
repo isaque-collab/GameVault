@@ -24,3 +24,19 @@
     width: 100%;
     border-radius: 8px;
 }
+
+.jogo-detalhes__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.jogo-detalhes__acoes button {
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.jogo-detalhes__acoes button:disabled {
+    cursor: not-allowed;
+}
