@@ -8,6 +8,7 @@ import {
     alterarSenha,
     atualizarFotoPerfil,
     atualizarPerfil,
+    excluirConta,
     removerFotoPerfil,
 } from '../api/usuarioApi.ts'
 import {ApiError} from '../api/http.ts'
@@ -23,7 +24,7 @@ const TIPOS_FOTO_PERMITIDOS = [
 const TAMANHO_MAXIMO_FOTO = 2 * 1024 * 1024
 
 function PerfilPage() {
-    const {usuario, carregando, atualizarUsuario,} = useAuth()
+    const {usuario, carregando, atualizarUsuario, limparUsuario,} = useAuth()
 
     const [editando, setEditando] = useState(false)
     const [nome, setNome] = useState('')
@@ -55,6 +56,12 @@ function PerfilPage() {
         useState<string | null>(null)
 
     const [sucessoSenha, setSucessoSenha] =
+        useState<string | null>(null)
+
+    const [excluindoConta, setExcluindoConta] =
+        useState(false)
+
+    const [erroExclusao, setErroExclusao] =
         useState<string | null>(null)
 
     const inputFotoRef =
@@ -325,6 +332,41 @@ function PerfilPage() {
             )
         } finally {
             setAlterandoSenha(false)
+        }
+    }
+
+    async function excluirContaUsuario() {
+        const confirmou = window.confirm(
+            'Deseja realmente excluir sua conta? ' +
+            'Esta ação removerá permanentemente sua conta, ' +
+            'favoritos, lista de desejos e avaliações. ' +
+            'Esta ação não pode ser desfeita.',
+        )
+
+        if (!confirmou) {
+            return
+        }
+
+        setErroExclusao(null)
+        setExcluindoConta(true)
+
+        try {
+            await excluirConta()
+
+            limparUsuario()
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 401) {
+                limparUsuario()
+                return
+            }
+
+            console.error(error)
+
+            setErroExclusao(
+                'Não foi possível excluir sua conta. Tente novamente.',
+            )
+        } finally {
+            setExcluindoConta(false)
         }
     }
 
@@ -671,6 +713,38 @@ function PerfilPage() {
                             </button>
                         </div>
                     </form>
+                </div>
+
+                <div className="perfil-zona-perigo">
+                    <h2>Zona de perigo</h2>
+
+                    <p className="perfil-zona-perigo-ajuda">
+                        Ao excluir sua conta, seus dados serão removidos
+                        permanentemente, incluindo favoritos, lista de desejos
+                        e avaliações.
+                    </p>
+
+                    {erroExclusao && (
+                        <p
+                            className="perfil-mensagem perfil-mensagem-erro"
+                            role="alert"
+                        >
+                            {erroExclusao}
+                        </p>
+                    )}
+
+                    <div className="perfil-acoes">
+                        <button
+                            className="perfil-botao perfil-botao-perigo"
+                            type="button"
+                            onClick={excluirContaUsuario}
+                            disabled={excluindoConta}
+                        >
+                            {excluindoConta
+                                ? 'Excluindo conta...'
+                                : 'Excluir conta'}
+                        </button>
+                    </div>
                 </div>
             </section>
         </main>

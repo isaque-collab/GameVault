@@ -73,3 +73,9 @@ export async function removerFotoPerfil(): Promise<void> {
         method: 'DELETE',
     })
 }
+
+export async function excluirConta(): Promise<void> {
+    return apiFetch<void>('/usuarios/me', {
+        method: 'DELETE',
+    })
+}

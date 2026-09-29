@@ -74,12 +74,17 @@ function AuthProvider({
         setUsuario(usuarioAtualizado)
     }
 
+    function limparUsuario() {
+        setUsuario(null)
+    }
+
     const valor: AuthContextValue = {
         usuario,
         carregando,
         autenticar,
         sair,
         atualizarUsuario,
+        limparUsuario,
     }
 
     return (

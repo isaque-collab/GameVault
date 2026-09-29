@@ -219,6 +219,39 @@
     font-size: 14px;
 }
 
+.perfil-zona-perigo {
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid #5a2a2f;
+}
+
+.perfil-zona-perigo h2 {
+    margin: 0 0 8px;
+    color: #ff8a96;
+    font-size: 20px;
+}
+
+.perfil-zona-perigo-ajuda {
+    margin: 0;
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.perfil-zona-perigo .perfil-mensagem {
+    margin-top: 20px;
+}
+
+.perfil-botao-perigo {
+    border-color: #b02a37;
+    background-color: #842029;
+    color: #fff;
+}
+
+.perfil-botao-perigo:not(:disabled):hover {
+    background-color: #a52834;
+}
+
 @media (max-width: 600px) {
     .perfil-page {
         padding: 24px 16px;

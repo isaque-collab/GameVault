@@ -10,6 +10,7 @@ export type AuthContextValue = {
     ) => Promise<void>
     sair: () => Promise<void>
     atualizarUsuario: (usuario: Usuario) => void
+    limparUsuario: () => void
 }
 
 export const AuthContext =
