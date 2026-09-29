@@ -55,3 +55,10 @@ export async function cadastrarUsuario(
         body: JSON.stringify(dados),
     })
 }
+export async function logout(): Promise<void> {
+    await prepararCsrf()
+
+    await apiFetch<void>('/auth/logout', {
+        method: 'POST',
+    })
+}

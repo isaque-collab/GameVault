@@ -24,6 +24,9 @@
 }
 
 .header_actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     margin-left: auto;
 }
 
@@ -34,3 +37,4 @@
 .header_link--active {
     font-weight: 700;
 }
+

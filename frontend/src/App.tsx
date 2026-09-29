@@ -7,6 +7,7 @@ import LoginPage from './pages/Login/LoginPage.tsx';
 import NotFoundPage from './pages/NotFound/NotFoundPage.tsx';
 import JogoDetalhesPage from './pages/JogoDetalhes/JogoDetalhesPage.tsx';
 import CadastroPage from './pages/Cadastro/CadastroPage.tsx';
+import PerfilPage from './pages/PerfilPage.tsx'
 
 function App() {
     return (
@@ -26,6 +27,7 @@ function App() {
                     path="/cadastro"
                     element={<CadastroPage/>}
                 />
+                <Route path="/perfil" element={<PerfilPage />} />
                 <Route path="*" element={<NotFoundPage/>}/>
             </Routes>
         </>

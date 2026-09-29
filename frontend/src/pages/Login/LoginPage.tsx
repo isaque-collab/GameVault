@@ -1,11 +1,12 @@
 import {useState, type SubmitEvent} from 'react'
 import {Link, useNavigate} from 'react-router'
-import {login} from '../../api/authApi.ts'
+import { useAuth } from '../../auth/useAuth.ts'
 import './LoginPage.css'
 
 function LoginPage() {
     const navigate = useNavigate()
 
+    const { autenticar } = useAuth()
     const [email, setEmail] = useState('')
     const [senha, setSenha] = useState('')
     const [enviando, setEnviando] = useState(false)
@@ -18,7 +19,7 @@ function LoginPage() {
             setEnviando(true)
             setErro(null)
 
-            await login(email, senha)
+            await autenticar(email, senha)
 
             navigate('/')
         } catch (error) {

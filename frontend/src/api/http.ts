@@ -1,5 +1,15 @@
 const API_BASE_URL = '/api'
 
+export class ApiError extends Error {
+    status: number
+
+    constructor(status: number, statusText?: string) {
+        super(`Erro ao acessar a API: ${status} ${statusText}`)
+        this.name = 'ApiError'
+        this.status = status
+    }
+}
+
 function obterCookie(nome: string): string | null {
     const prefixo = `${nome}=`
 
@@ -41,8 +51,9 @@ async function apiFetch<T>(
     })
 
     if (!resposta.ok) {
-        throw new Error(
-            `Erro ao acessar a API: ${resposta.status} ${resposta.statusText}`,
+        throw new ApiError(
+            resposta.status,
+            resposta.statusText,
         )
     }
 

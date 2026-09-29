@@ -1,0 +1,141 @@
+.perfil-page {
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    padding: 48px 24px;
+}
+
+.perfil-card {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px;
+    border-radius: 16px;
+    background-color: #181818;
+}
+
+.perfil-cabecalho {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #333;
+}
+
+.perfil-foto,
+.perfil-foto-fallback {
+    width: 112px;
+    height: 112px;
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+
+.perfil-foto {
+    object-fit: cover;
+}
+
+.perfil-foto-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #333;
+    font-size: 40px;
+    font-weight: 700;
+}
+
+.perfil-identificacao h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+
+.perfil-identificacao p {
+    margin: 0;
+    color: #aaa;
+    font-size: 16px;
+}
+
+.perfil-dados {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-top: 32px;
+}
+
+.perfil-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.perfil-label {
+    color: #999;
+    font-size: 14px;
+}
+
+.perfil-valor {
+    font-size: 17px;
+}
+
+.perfil-status {
+    text-align: center;
+    padding: 48px 0;
+}
+
+.perfil-foto-gerenciamento {
+    padding: 32px 0;
+    border-bottom: 1px solid #333;
+}
+
+.perfil-foto-gerenciamento h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.perfil-foto-ajuda {
+    margin: 0 0 16px;
+    color: #999;
+    font-size: 14px;
+}
+
+.perfil-input-arquivo {
+    display: block;
+    max-width: 100%;
+    color: #ddd;
+}
+
+.perfil-arquivo-selecionado {
+    margin: 12px 0 0;
+    color: #aaa;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.perfil-foto-acoes {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+    .perfil-page {
+        padding: 24px 16px;
+    }
+
+    .perfil-card {
+        padding: 24px;
+    }
+
+    .perfil-cabecalho {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .perfil-foto,
+    .perfil-foto-fallback {
+        width: 96px;
+        height: 96px;
+    }
+
+    .perfil-foto-acoes {
+        flex-direction: column;
+    }
+}
