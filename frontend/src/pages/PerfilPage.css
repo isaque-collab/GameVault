@@ -115,6 +115,110 @@
     margin-top: 20px;
 }
 
+.perfil-formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 32px;
+}
+
+.perfil-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #242424;
+    color: #f5f5f5;
+    outline: none;
+}
+
+.perfil-input:focus {
+    border-color: #777;
+}
+
+.perfil-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.perfil-campo-ajuda {
+    color: #888;
+    font-size: 13px;
+}
+
+.perfil-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.perfil-botao {
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.perfil-botao:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.perfil-botao-primario {
+    background-color: #f5f5f5;
+    color: #181818;
+}
+
+.perfil-botao-primario:not(:disabled):hover {
+    background-color: #ddd;
+}
+
+.perfil-botao-secundario {
+    border-color: #444;
+    background-color: #292929;
+    color: #f5f5f5;
+}
+
+.perfil-botao-secundario:not(:disabled):hover {
+    background-color: #353535;
+}
+
+.perfil-mensagem {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.perfil-mensagem-erro {
+    background-color: rgba(220, 53, 69, 0.12);
+    color: #ff8a96;
+}
+
+.perfil-mensagem-sucesso {
+    background-color: rgba(40, 167, 69, 0.12);
+    color: #7ed992;
+}
+
+.perfil-seguranca {
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid #333;
+}
+
+.perfil-seguranca h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.perfil-seguranca-ajuda {
+    margin: 0;
+    color: #999;
+    font-size: 14px;
+}
+
 @media (max-width: 600px) {
     .perfil-page {
         padding: 24px 16px;
@@ -137,5 +241,13 @@
 
     .perfil-foto-acoes {
         flex-direction: column;
+    }
+
+    .perfil-acoes {
+        flex-direction: column;
+    }
+
+    .perfil-botao {
+        width: 100%;
     }
 }

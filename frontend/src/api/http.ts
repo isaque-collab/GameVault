@@ -1,12 +1,21 @@
 const API_BASE_URL = '/api'
 
+type ProblemaApi = {
+    detail?: unknown
+}
+
 export class ApiError extends Error {
     status: number
+    detail?: string
 
-    constructor(status: number, statusText?: string) {
-        super(`Erro ao acessar a API: ${status} ${statusText}`)
+    constructor(status: number, statusText?: string, detail?: string) {
+        super(detail ??
+            `Erro ao acessar a API: ${status} ${statusText}`,
+        )
+
         this.name = 'ApiError'
         this.status = status
+        this.detail = detail
     }
 }
 
@@ -30,6 +39,23 @@ function metodoAlteraEstado(metodo?: string): boolean {
     return !['GET', 'HEAD', 'OPTIONS'].includes(metodoNormalizado)
 }
 
+async function obterDetalheErro(
+    resposta: Response,
+): Promise<string | undefined> {
+    try {
+        const problema =
+            await resposta.json() as ProblemaApi
+
+        if (typeof problema.detail === 'string') {
+            return problema.detail
+        }
+
+        return undefined
+    } catch {
+        return undefined
+    }
+}
+
 async function apiFetch<T>(
     caminho: string,
     opcoes: RequestInit = {},
@@ -51,9 +77,12 @@ async function apiFetch<T>(
     })
 
     if (!resposta.ok) {
+        const detalhe = await obterDetalheErro(resposta)
+
         throw new ApiError(
             resposta.status,
             resposta.statusText,
+            detalhe,
         )
     }
 

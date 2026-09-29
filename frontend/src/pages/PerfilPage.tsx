@@ -3,8 +3,13 @@ import {
     useState,
     type SubmitEvent,
 } from 'react'
-import {Navigate} from 'react-router-dom'
-import {atualizarFotoPerfil, atualizarPerfil, removerFotoPerfil} from '../api/usuarioApi.ts'
+import {Navigate} from 'react-router'
+import {
+    alterarSenha,
+    atualizarFotoPerfil,
+    atualizarPerfil,
+    removerFotoPerfil,
+} from '../api/usuarioApi.ts'
 import {ApiError} from '../api/http.ts'
 import {useAuth} from '../auth/useAuth.ts'
 import './PerfilPage.css'
@@ -37,6 +42,20 @@ function PerfilPage() {
 
     const [erro, setErro] = useState<string | null>(null)
     const [sucesso, setSucesso] = useState<string | null>(null)
+
+    const [senhaAtual, setSenhaAtual] = useState('')
+    const [novaSenha, setNovaSenha] = useState('')
+    const [confirmacaoNovaSenha, setConfirmacaoNovaSenha] =
+        useState('')
+
+    const [alterandoSenha, setAlterandoSenha] =
+        useState(false)
+
+    const [erroSenha, setErroSenha] =
+        useState<string | null>(null)
+
+    const [sucessoSenha, setSucessoSenha] =
+        useState<string | null>(null)
 
     const inputFotoRef =
         useRef<HTMLInputElement>(null)
@@ -250,6 +269,65 @@ function PerfilPage() {
         }
     }
 
+    async function salvarSenha(
+        event: SubmitEvent<HTMLFormElement>,
+    ) {
+        event.preventDefault()
+
+        setErroSenha(null)
+        setSucessoSenha(null)
+
+        if (novaSenha.length < 8) {
+            setErroSenha(
+                'A nova senha deve possuir no mínimo 8 caracteres.',
+            )
+            return
+        }
+
+        if (novaSenha !== confirmacaoNovaSenha) {
+            setErroSenha(
+                'A nova senha e a confirmação não coincidem.',
+            )
+            return
+        }
+
+        setAlterandoSenha(true)
+
+        try {
+            await alterarSenha({
+                senhaAtual,
+                novaSenha,
+                confirmacaoNovaSenha,
+            })
+
+            setSenhaAtual('')
+            setNovaSenha('')
+            setConfirmacaoNovaSenha('')
+
+            setSucessoSenha(
+                'Senha alterada com sucesso.',
+            )
+        } catch (error) {
+            if (error instanceof ApiError) {
+                if (error.status === 400) {
+                    setErroSenha(
+                        error.detail ??
+                        'Verifique as senhas informadas e tente novamente.',
+                    )
+                    return
+                }
+            }
+
+            console.error(error)
+
+            setErroSenha(
+                'Não foi possível alterar a senha.',
+            )
+        } finally {
+            setAlterandoSenha(false)
+        }
+    }
+
     return (
         <main className="perfil-page">
             <section className="perfil-card">
@@ -321,10 +399,10 @@ function PerfilPage() {
 
                         {usuario.imagemPerfil && (
                             <button
-                            className="perfil-botao perfil-botao-secundario"
-                            type="button"
-                            onClick={removerFoto}
-                            disabled={alterandoFoto}
+                                className="perfil-botao perfil-botao-secundario"
+                                type="button"
+                                onClick={removerFoto}
+                                disabled={alterandoFoto}
                             >
                                 Remover foto
                             </button>
@@ -477,6 +555,123 @@ function PerfilPage() {
                         </div>
                     </>
                 )}
+
+                <div className="perfil-seguranca">
+                    <h2>Segurança</h2>
+
+                    <p className="perfil-seguranca-ajuda">
+                        Altere a senha utilizada para acessar sua conta.
+                    </p>
+
+                    <form
+                        className="perfil-formulario"
+                        onSubmit={salvarSenha}
+                    >
+                        <div className="perfil-campo">
+                            <label
+                                className="perfil-label"
+                                htmlFor="perfil-senha-atual"
+                            >
+                                Senha atual
+                            </label>
+
+                            <input
+                                id="perfil-senha-atual"
+                                className="perfil-input"
+                                type="password"
+                                value={senhaAtual}
+                                onChange={(event) =>
+                                    setSenhaAtual(event.target.value)
+                                }
+                                autoComplete="current-password"
+                                required
+                                disabled={alterandoSenha}
+                            />
+                        </div>
+
+                        <div className="perfil-campo">
+                            <label
+                                className="perfil-label"
+                                htmlFor="perfil-nova-senha"
+                            >
+                                Nova senha
+                            </label>
+
+                            <input
+                                id="perfil-nova-senha"
+                                className="perfil-input"
+                                type="password"
+                                value={novaSenha}
+                                onChange={(event) =>
+                                    setNovaSenha(event.target.value)
+                                }
+                                autoComplete="new-password"
+                                minLength={8}
+                                required
+                                disabled={alterandoSenha}
+                            />
+
+                            <span className="perfil-campo-ajuda">
+                Mínimo de 8 caracteres.
+            </span>
+                        </div>
+
+                        <div className="perfil-campo">
+                            <label
+                                className="perfil-label"
+                                htmlFor="perfil-confirmacao-nova-senha"
+                            >
+                                Confirmar nova senha
+                            </label>
+
+                            <input
+                                id="perfil-confirmacao-nova-senha"
+                                className="perfil-input"
+                                type="password"
+                                value={confirmacaoNovaSenha}
+                                onChange={(event) =>
+                                    setConfirmacaoNovaSenha(
+                                        event.target.value,
+                                    )
+                                }
+                                autoComplete="new-password"
+                                minLength={8}
+                                required
+                                disabled={alterandoSenha}
+                            />
+                        </div>
+
+                        {erroSenha && (
+                            <p
+                                className="perfil-mensagem perfil-mensagem-erro"
+                                role="alert"
+                            >
+                                {erroSenha}
+                            </p>
+                        )}
+
+                        {sucessoSenha && (
+                            <p
+                                className="perfil-mensagem perfil-mensagem-sucesso"
+                                role="status"
+                            >
+                                {sucessoSenha}
+                            </p>
+                        )}
+
+                        <div className="perfil-acoes">
+                            <button
+                                className="perfil-botao perfil-botao-primario"
+                                type="submit"
+                                disabled={alterandoSenha}
+                            >
+                                {alterandoSenha
+                                    ? 'Alterando...'
+                                    : 'Alterar senha'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </section>
         </main>
     )

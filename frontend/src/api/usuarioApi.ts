@@ -7,6 +7,12 @@ export type AtualizarPerfilDados = {
     email: string
 }
 
+export type AlterarSenhaDados = {
+    senhaAtual: string
+    novaSenha: string
+    confirmacaoNovaSenha: string
+}
+
 export async function buscarUsuarioAtual(): Promise<Usuario | null> {
     const resposta = await fetch('/api/usuarios/me', {
         credentials: 'include',
@@ -29,6 +35,18 @@ export async function atualizarPerfil(
     dados: AtualizarPerfilDados,
 ): Promise<Usuario> {
     return apiFetch<Usuario>('/usuarios/me', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados),
+    })
+}
+
+export async function alterarSenha(
+    dados: AlterarSenhaDados,
+): Promise<void> {
+    return apiFetch<void>('/usuarios/me/senha', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
