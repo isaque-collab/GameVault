@@ -8,6 +8,7 @@ import NotFoundPage from './pages/NotFound/NotFoundPage.tsx';
 import JogoDetalhesPage from './pages/JogoDetalhes/JogoDetalhesPage.tsx';
 import CadastroPage from './pages/Cadastro/CadastroPage.tsx';
 import PerfilPage from './pages/PerfilPage.tsx'
+import RotaProtegida from './auth/RotaProtegida.tsx'
 
 function App() {
     return (
@@ -16,8 +17,23 @@ function App() {
 
             <Routes>
                 <Route path="/" element={<HomePage/>}/>
-                <Route path="favoritos" element={<FavoritosPage/>}/>
-                <Route path="/lista-desejos" element={<ListaDesejosPage/>}/>
+                <Route
+                    path="/favoritos"
+                    element={
+                        <RotaProtegida>
+                            <FavoritosPage/>
+                        </RotaProtegida>
+                    }
+                />
+
+                <Route
+                    path="/lista-desejos"
+                    element={
+                        <RotaProtegida>
+                            <ListaDesejosPage/>
+                        </RotaProtegida>
+                    }
+                />
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route
                     path="/jogos/:rawgGameId"
@@ -27,7 +43,14 @@ function App() {
                     path="/cadastro"
                     element={<CadastroPage/>}
                 />
-                <Route path="/perfil" element={<PerfilPage />} />
+                <Route
+                    path="/perfil"
+                    element={
+                        <RotaProtegida>
+                            <PerfilPage/>
+                        </RotaProtegida>
+                    }
+                />
                 <Route path="*" element={<NotFoundPage/>}/>
             </Routes>
         </>

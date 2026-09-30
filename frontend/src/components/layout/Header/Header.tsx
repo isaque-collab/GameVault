@@ -41,23 +41,28 @@ function Header() {
                         Início
                     </NavLink>
 
-                    <NavLink
-                        className={({isActive}) =>
-                            isActive ? 'header_link header_link--active' : 'header_link'
-                        }
-                        to="/favoritos"
-                    >
-                        Favoritos
-                    </NavLink>
+                    {!carregando && usuario && (
+                        <>
+                            <NavLink
+                                className={({isActive}) =>
+                                    isActive ? 'header_link header_link--active' : 'header_link'
+                                }
+                                to="/favoritos"
+                            >
+                                Favoritos
+                            </NavLink>
 
-                    <NavLink
-                        className={({isActive}) =>
-                            isActive ? 'header_link header_link--active' : 'header_link'
-                        }
-                        to="/lista-desejos"
-                    >
-                        Lista desejos
-                    </NavLink>
+                            <NavLink
+                                className={({isActive}) =>
+                                    isActive ? 'header_link header_link--active' : 'header_link'
+                                }
+                                to="/lista-desejos"
+                            >
+                                Lista desejos
+                            </NavLink>
+                        </>
+                    )}
+
                 </nav>
 
                 <div className="header_actions">
@@ -73,9 +78,16 @@ function Header() {
                             </button>
                         </>
                     ) : (
-                        <NavLink to="/login">
-                            Entrar
-                        </NavLink>
+
+                        <>
+                            <NavLink to="/login">
+                                Entrar
+                            </NavLink>
+
+                            <NavLink to="/cadastro">
+                                Criar conta
+                            </NavLink>
+                        </>
                     )}
                 </div>
             </div>

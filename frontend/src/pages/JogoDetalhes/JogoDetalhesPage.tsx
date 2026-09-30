@@ -3,7 +3,10 @@ import {
     useEffect,
     useState,
 } from 'react'
-import { useParams } from 'react-router'
+import {
+    Link,
+    useParams
+} from 'react-router'
 import {
     avaliarJogo,
     removerAvaliacao,
@@ -14,12 +17,12 @@ import {
     removerFavorito,
     removerListaDesejos,
 } from '../../api/colecoesApi'
-import { buscarDetalhesJogo } from '../../api/jogosApi'
-import type { JogoDetalhes } from '../../types/jogo'
+import {buscarDetalhesJogo} from '../../api/jogosApi'
+import type {JogoDetalhes} from '../../types/jogo'
 import './JogoDetalhesPage.css'
 
 function JogoDetalhesPage() {
-    const { rawgGameId } = useParams()
+    const {rawgGameId} = useParams()
 
     const [jogo, setJogo] =
         useState<JogoDetalhes | null>(null)
@@ -470,10 +473,15 @@ function JogoDetalhesPage() {
                     </>
                 ) : (
                     <p>
-                        Entre na sua conta para
-                        favoritar, adicionar à lista
-                        de desejos e avaliar este
-                        jogo.
+                        <Link to="/login">
+                            Entre na sua conta
+                        </Link>
+                        {' '}ou{' '}
+                        <Link to="/cadastro">
+                            crie uma conta
+                        </Link>
+                        {' '} para favoritar, adicionar à lista
+                        de desejos e avaliar este jogo.
                     </p>
                 )}
 

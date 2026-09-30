@@ -1,12 +1,22 @@
 import {useState, type SubmitEvent} from 'react'
-import {Link, useNavigate} from 'react-router'
-import { useAuth } from '../../auth/useAuth.ts'
+import {
+    Link,
+    useLocation,
+    useNavigate
+} from 'react-router'
+import {useAuth} from '../../auth/useAuth.ts'
 import './LoginPage.css'
 
 function LoginPage() {
     const navigate = useNavigate()
+    const location = useLocation()
 
-    const { autenticar } = useAuth()
+    const destinoAposLogin =
+        typeof location.state?.from === 'string'
+            ? location.state.from
+            : '/'
+
+    const {autenticar} = useAuth()
     const [email, setEmail] = useState('')
     const [senha, setSenha] = useState('')
     const [enviando, setEnviando] = useState(false)
@@ -21,7 +31,9 @@ function LoginPage() {
 
             await autenticar(email, senha)
 
-            navigate('/')
+            navigate(destinoAposLogin, {
+                replace: true,
+            })
         } catch (error) {
             console.error(error)
 
@@ -82,8 +94,8 @@ function LoginPage() {
                 )}
 
                 <button
-                type="submit"
-                disabled={enviando}
+                    type="submit"
+                    disabled={enviando}
                 >
                     {enviando ? 'Entrando...' : 'Entrar'}
                 </button>
