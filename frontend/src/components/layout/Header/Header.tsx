@@ -41,6 +41,16 @@ function Header() {
                         Início
                     </NavLink>
 
+                    <NavLink
+                        className={({isActive}) =>
+                            isActive
+                                ? 'header_link header_link--active'
+                                : 'header_link'
+                        }
+                        to="/catalogo"
+                    >
+                        Catálogo
+                    </NavLink>
                     {!carregando && usuario && (
                         <>
                             <NavLink

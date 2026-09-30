@@ -62,3 +62,17 @@ export type ItemColecaoJogo = {
 
     metadadosDisponiveis: boolean
 }
+
+export type OrdenacaoJogo =
+    | 'POPULARIDADE'
+    | 'AVALIACAO_RAWG'
+    | 'METACRITIC'
+    | 'LANCAMENTO'
+    | 'NOME'
+
+export type FiltrosCatalogoJogos = {
+    nome?: string
+    genero?: string
+    ordenacao?: OrdenacaoJogo
+    pagina?: number
+}

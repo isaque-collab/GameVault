@@ -9,6 +9,7 @@ import JogoDetalhesPage from './pages/JogoDetalhes/JogoDetalhesPage.tsx';
 import CadastroPage from './pages/Cadastro/CadastroPage.tsx';
 import PerfilPage from './pages/PerfilPage.tsx'
 import RotaProtegida from './auth/RotaProtegida.tsx'
+import CatalogoPage from './pages/Catalogo/CatalogoPage.tsx'
 
 function App() {
     return (
@@ -17,6 +18,11 @@ function App() {
 
             <Routes>
                 <Route path="/" element={<HomePage/>}/>
+
+                <Route
+                    path="/catalogo"
+                    element={<CatalogoPage/>}
+                />
                 <Route
                     path="/favoritos"
                     element={
