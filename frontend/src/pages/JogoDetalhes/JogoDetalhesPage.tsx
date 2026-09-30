@@ -202,11 +202,11 @@ function JogoDetalhesPage() {
         if (
             nota.trim() === '' ||
             Number.isNaN(notaNumerica) ||
-            notaNumerica < 0 ||
+            notaNumerica < 1 ||
             notaNumerica > 5
         ) {
             setErroAcao(
-                'Informe uma nota entre 0 e 5.',
+                'Informe uma nota entre 1 e 5.',
             )
             return
         }
@@ -424,7 +424,7 @@ function JogoDetalhesPage() {
                             <input
                                 id="nota"
                                 type="number"
-                                min="0"
+                                min="1"
                                 max="5"
                                 step="1"
                                 value={nota}
