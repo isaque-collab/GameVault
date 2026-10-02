@@ -55,6 +55,7 @@ function JogoDetalhesPage() {
     ] = useState(false)
 
     const [nota, setNota] = useState('')
+    const [abaAtiva, setAbaAtiva] = useState('sobre')
 
     const carregarDetalhes = useCallback(
         async (id: number) => {
@@ -269,32 +270,33 @@ function JogoDetalhesPage() {
 
     if (carregando) {
         return (
-            <main className="jogo-detalhes">
-                <p>Carregando detalhes do jogo...</p>
-            </main>
-        )
-    }
-
-    if (erro || !jogo) {
-        return (
-            <main className="jogo-detalhes">
-                <p className="jogo-detalhes__erro" role="alert">
-                    {erro ?? 'Jogo não encontrado.'}
-                </p>
-            </main>
-        )
-    }
-
-    return (
         <main className="jogo-detalhes">
-            <section className="jogo-detalhes__hero">
+            <section
+                className="jogo-detalhes__hero"
+                style={{
+                    backgroundImage: jogo.imagemFundo
+                        ? 'linear-gradient(90deg, rgb(11 16 23 / 98%) 0%, rgb(11 16 23 / 88%) 48%, rgb(11 16 23 / 55%) 100%), url("' + jogo.imagemFundo + '")'
+                        : undefined,
+                }}
+            >
+                {jogo.imagemFundo && (
+                    <div className="jogo-detalhes__capa">
+                        <img
+                            src={jogo.imagemFundo}
+                            alt={'Capa de ' + jogo.nome}
+                        />
+                    </div>
+                )}
+
                 <div className="jogo-detalhes__conteudo">
                     <span className="jogo-detalhes__label">DETALHES DO JOGO</span>
                     <h1>{jogo.nome}</h1>
 
                     <div className="jogo-detalhes__meta">
                         {jogo.dataLancamento && <span>{jogo.dataLancamento.slice(0, 4)}</span>}
-                        {jogo.generos.slice(0, 3).map((genero) => <span key={genero}>{genero}</span>)}
+                        {jogo.generos.slice(0, 3).map((genero) => (
+                            <span key={genero}>{genero}</span>
+                        ))}
                         {jogo.desenvolvedoras[0] && <span>{jogo.desenvolvedoras[0]}</span>}
                     </div>
 
@@ -308,16 +310,16 @@ function JogoDetalhesPage() {
                         {jogo.metacritic !== null && (
                             <div className="jogo-detalhes__metacritic">
                                 <strong>{jogo.metacritic}</strong>
-                                <span>Metacritic</span>
+                                <span>METACRITIC</span>
                             </div>
                         )}
                         {jogo.mediaAvaliacoesGameVault !== null && (
                             <div className="jogo-detalhes__gv-rating">
                                 <strong>{jogo.mediaAvaliacoesGameVault}</strong>
                                 <span>
-                                    GameVault
+                                    GAMEVAULT
                                     {jogo.quantidadeAvaliacoesGameVault > 0
-                                        ? ' · ' + jogo.quantidadeAvaliacoesGameVault
+                                        ? ' · ' + jogo.quantidadeAvaliacoesGameVault + ' avaliações'
                                         : ''}
                                 </span>
                             </div>
@@ -336,11 +338,8 @@ function JogoDetalhesPage() {
                                     <span aria-hidden="true">♥</span>
                                     {processandoFavorito
                                         ? 'Atualizando...'
-                                        : jogo.favoritado
-                                            ? 'Remover favorito'
-                                            : 'Favoritar'}
+                                        : jogo.favoritado ? 'Remover favorito' : 'Favoritar'}
                                 </button>
-
                                 <button
                                     type="button"
                                     className="jogo-detalhes__acao"
@@ -350,9 +349,7 @@ function JogoDetalhesPage() {
                                     <span aria-hidden="true">☷</span>
                                     {processandoListaDesejos
                                         ? 'Atualizando...'
-                                        : jogo.naListaDesejos
-                                            ? 'Remover da lista'
-                                            : 'Lista de desejos'}
+                                        : jogo.naListaDesejos ? 'Remover da lista' : 'Lista de desejos'}
                                 </button>
                             </>
                         ) : (
@@ -382,72 +379,107 @@ function JogoDetalhesPage() {
                         </div>
                     )}
                 </div>
-
-                {jogo.imagemFundo && (
-                    <div className="jogo-detalhes__capa">
-                        <img src={jogo.imagemFundo} alt={'Imagem de ' + jogo.nome} />
-                    </div>
-                )}
             </section>
 
             <nav className="jogo-detalhes__abas" aria-label="Seções dos detalhes do jogo">
-                <a href="#sobre">Sobre</a>
-                {jogo.screenshots.length > 0 && <a href="#screenshots">Screenshots</a>}
-                {jogo.plataformas.length > 0 && <a href="#plataformas">Plataformas</a>}
-                {jogo.plataformas.some((plataforma) => plataforma.requisitoMinimo || plataforma.requisitoRecomendade) && (
-                    <a href="#requisitos">Requisitos</a>
+                <button
+                    type="button"
+                    className={abaAtiva === 'sobre' ? 'ativo' : ''}
+                    onClick={() => setAbaAtiva('sobre')}
+                >
+                    Sobre
+                </button>
+
+                {jogo.screenshots.length > 0 && (
+                    <button
+                        type="button"
+                        className={abaAtiva === 'screenshots' ? 'ativo' : ''}
+                        onClick={() => setAbaAtiva('screenshots')}
+                    >
+                        Screenshots
+                    </button>
+                )}
+
+                {jogo.plataformas.length > 0 && (
+                    <button
+                        type="button"
+                        className={abaAtiva === 'plataformas' ? 'ativo' : ''}
+                        onClick={() => setAbaAtiva('plataformas')}
+                    >
+                        Plataformas
+                    </button>
+                )}
+
+                {jogo.plataformas.some(
+                    (plataforma) =>
+                        plataforma.requisitoMinimo ||
+                        plataforma.requisitoRecomendade,
+                ) && (
+                    <button
+                        type="button"
+                        className={abaAtiva === 'requisitos' ? 'ativo' : ''}
+                        onClick={() => setAbaAtiva('requisitos')}
+                    >
+                        Requisitos
+                    </button>
                 )}
             </nav>
 
-            <section id="sobre" className="jogo-detalhes__bloco">
-                <div className="jogo-detalhes__bloco-cabecalho">
-                    <span>Sobre</span>
-                </div>
-
-                {jogo.descricao ? (
-                    <p className="jogo-detalhes__descricao">{jogo.descricao}</p>
-                ) : (
-                    <p className="jogo-detalhes__vazio">Descrição não disponível.</p>
-                )}
-
-                {jogo.generos.length > 0 && (
-                    <div className="jogo-detalhes__tags">
-                        {jogo.generos.map((genero) => <span key={genero}>{genero}</span>)}
+            {abaAtiva === 'sobre' && (
+                <section className="jogo-detalhes__bloco">
+                    <div className="jogo-detalhes__bloco-cabecalho">
+                        <span>Sobre</span>
                     </div>
-                )}
 
-                <div className="jogo-detalhes__creditos">
-                    {jogo.desenvolvedoras.length > 0 && (
-                        <div>
-                            <span>Desenvolvedora</span>
-                            <strong>{jogo.desenvolvedoras.join(', ')}</strong>
+                    {jogo.descricao ? (
+                        <p className="jogo-detalhes__descricao">{jogo.descricao}</p>
+                    ) : (
+                        <p className="jogo-detalhes__vazio">Descrição não disponível.</p>
+                    )}
+
+                    {jogo.generos.length > 0 && (
+                        <div className="jogo-detalhes__tags">
+                            {jogo.generos.map((genero) => <span key={genero}>{genero}</span>)}
                         </div>
                     )}
-                    {jogo.publicadoras.length > 0 && (
-                        <div>
-                            <span>Publicadora</span>
-                            <strong>{jogo.publicadoras.join(', ')}</strong>
-                        </div>
-                    )}
-                </div>
-            </section>
 
-            {jogo.screenshots.length > 0 && (
-                <section id="screenshots" className="jogo-detalhes__bloco">
+                    <div className="jogo-detalhes__creditos">
+                        {jogo.desenvolvedoras.length > 0 && (
+                            <div>
+                                <span>Desenvolvedora</span>
+                                <strong>{jogo.desenvolvedoras.join(', ')}</strong>
+                            </div>
+                        )}
+                        {jogo.publicadoras.length > 0 && (
+                            <div>
+                                <span>Publicadora</span>
+                                <strong>{jogo.publicadoras.join(', ')}</strong>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
+
+            {abaAtiva === 'screenshots' && jogo.screenshots.length > 0 && (
+                <section className="jogo-detalhes__bloco">
                     <div className="jogo-detalhes__bloco-cabecalho">
                         <span>Screenshots</span>
                         <small>{jogo.screenshots.length} imagens</small>
                     </div>
                     <div className="jogo-detalhes__screenshots">
                         {jogo.screenshots.map((screenshot) => (
-                            <img key={screenshot} src={screenshot} alt={'Screenshot de ' + jogo.nome} />
+                            <img
+                                key={screenshot}
+                                src={screenshot}
+                                alt={'Screenshot de ' + jogo.nome}
+                            />
                         ))}
                     </div>
                 </section>
             )}
 
-            {jogo.plataformas.length > 0 && (
-                <section id="plataformas" className="jogo-detalhes__bloco">
+            {abaAtiva === 'plataformas' && jogo.plataformas.length > 0 && (
+                <section className="jogo-detalhes__bloco">
                     <div className="jogo-detalhes__bloco-cabecalho">
                         <span>Plataformas</span>
                     </div>
@@ -461,8 +493,8 @@ function JogoDetalhesPage() {
                 </section>
             )}
 
-            {jogo.plataformas.some((plataforma) => plataforma.requisitoMinimo || plataforma.requisitoRecomendade) && (
-                <section id="requisitos" className="jogo-detalhes__bloco">
+            {abaAtiva === 'requisitos' && (
+                <section className="jogo-detalhes__bloco">
                     <div className="jogo-detalhes__bloco-cabecalho">
                         <span>Requisitos</span>
                     </div>
@@ -488,7 +520,9 @@ function JogoDetalhesPage() {
                 <section className="jogo-detalhes__bloco jogo-detalhes__avaliacao-box">
                     <div className="jogo-detalhes__bloco-cabecalho">
                         <span>Minha avaliação</span>
-                        {jogo.minhaAvaliacao !== null && <small>Atual: {jogo.minhaAvaliacao}/5</small>}
+                        {jogo.minhaAvaliacao !== null && (
+                            <small>Atual: {jogo.minhaAvaliacao}/5</small>
+                        )}
                     </div>
 
                     <div className="jogo-detalhes__avaliacao">
@@ -503,7 +537,11 @@ function JogoDetalhesPage() {
                             onChange={(event) => setNota(event.target.value)}
                             disabled={processandoAvaliacao}
                         />
-                        <button type="button" onClick={enviarAvaliacao} disabled={processandoAvaliacao}>
+                        <button
+                            type="button"
+                            onClick={enviarAvaliacao}
+                            disabled={processandoAvaliacao}
+                        >
                             {processandoAvaliacao
                                 ? 'Salvando...'
                                 : jogo.minhaAvaliacao !== null
@@ -511,7 +549,11 @@ function JogoDetalhesPage() {
                                     : 'Avaliar'}
                         </button>
                         {jogo.minhaAvaliacao !== null && (
-                            <button type="button" onClick={excluirAvaliacao} disabled={processandoAvaliacao}>
+                            <button
+                                type="button"
+                                onClick={excluirAvaliacao}
+                                disabled={processandoAvaliacao}
+                            >
                                 Remover avaliação
                             </button>
                         )}
@@ -523,7 +565,8 @@ function JogoDetalhesPage() {
                 <p className="jogo-detalhes__erro" role="alert">{erroAcao}</p>
             )}
         </main>
-        )
+    )
+
 }
 
 export default JogoDetalhesPage
