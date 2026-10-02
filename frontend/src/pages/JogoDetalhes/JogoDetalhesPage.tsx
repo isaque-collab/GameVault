@@ -18,11 +18,14 @@ import {
     removerListaDesejos,
 } from '../../api/colecoesApi'
 import {buscarDetalhesJogo} from '../../api/jogosApi'
+import {useAuth} from '../../auth/useAuth'
 import type {JogoDetalhes} from '../../types/jogo'
 import './JogoDetalhesPage.css'
 
 function JogoDetalhesPage() {
     const {rawgGameId} = useParams()
+    const {usuario} = useAuth()
+    const usuarioAutenticado = usuario !== null
 
     const [jogo, setJogo] =
         useState<JogoDetalhes | null>(null)
@@ -266,6 +269,23 @@ function JogoDetalhesPage() {
 
     if (carregando) {
         return (
+            <main className="jogo-detalhes">
+                <p>Carregando detalhes do jogo...</p>
+            </main>
+        )
+    }
+
+    if (erro || !jogo) {
+        return (
+            <main className="jogo-detalhes">
+                <p className="jogo-detalhes__erro" role="alert">
+                    {erro ?? 'Jogo não encontrado.'}
+                </p>
+            </main>
+        )
+    }
+
+    return (
         <main className="jogo-detalhes">
             <section className="jogo-detalhes__hero">
                 <div className="jogo-detalhes__conteudo">
@@ -503,8 +523,7 @@ function JogoDetalhesPage() {
                 <p className="jogo-detalhes__erro" role="alert">{erroAcao}</p>
             )}
         </main>
-    )
-
+        )
 }
 
 export default JogoDetalhesPage
