@@ -270,6 +270,23 @@ function JogoDetalhesPage() {
 
     if (carregando) {
         return (
+            <main className="jogo-detalhes">
+                <p>Carregando detalhes do jogo...</p>
+            </main>
+        )
+    }
+
+    if (erro || !jogo) {
+        return (
+            <main className="jogo-detalhes">
+                <p className="jogo-detalhes__erro" role="alert">
+                    {erro ?? 'Jogo não encontrado.'}
+                </p>
+            </main>
+        )
+    }
+
+    return (
         <main className="jogo-detalhes">
             <section
                 className="jogo-detalhes__hero"
