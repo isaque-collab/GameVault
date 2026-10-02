@@ -1,4 +1,10 @@
-import {useEffect, useState} from 'react'
+import {
+    useEffect,
+    useState,
+} from 'react'
+import {
+    Link,
+} from 'react-router'
 import {
     buscarJogosMaisBemAvaliados,
     buscarJogosPopulares,
@@ -7,7 +13,7 @@ import {
 import GameSection, {
     type GameSectionItem,
 } from '../../components/game/GameSection/GameSection.tsx'
-import type {JogoResumo} from '../../types/jogo.ts';
+import type {JogoResumo} from '../../types/jogo.ts'
 import './HomePage.css'
 
 function converterParaGameSectionItem(
@@ -25,13 +31,20 @@ function converterParaGameSectionItem(
 }
 
 function HomePage() {
-    const [populares, setPopulares] = useState<GameSectionItem[]>([])
-    const [lancamentos, setLancamentos] = useState<GameSectionItem[]>([])
+    const [populares, setPopulares] =
+        useState<GameSectionItem[]>([])
+
+    const [lancamentos, setLancamentos] =
+        useState<GameSectionItem[]>([])
+
     const [maisBemAvaliados, setMaisBemAvaliados] =
         useState<GameSectionItem[]>([])
 
-    const [carregando, setCarregando] = useState(true)
-    const [erro, setErro] = useState<string | null>(null)
+    const [carregando, setCarregando] =
+        useState(true)
+
+    const [erro, setErro] =
+        useState<string | null>(null)
 
     useEffect(() => {
         async function carregarJogos() {
@@ -50,11 +63,15 @@ function HomePage() {
                 ])
 
                 setPopulares(
-                    respostaPopulares.jogos.map(converterParaGameSectionItem),
+                    respostaPopulares.jogos.map(
+                        converterParaGameSectionItem,
+                    ),
                 )
 
                 setLancamentos(
-                    respostaLancamentos.jogos.map(converterParaGameSectionItem),
+                    respostaLancamentos.jogos.map(
+                        converterParaGameSectionItem,
+                    ),
                 )
 
                 setMaisBemAvaliados(
@@ -64,7 +81,10 @@ function HomePage() {
                 )
             } catch (error) {
                 console.error(error)
-                setErro('Não foi possível carregar os jogos.')
+
+                setErro(
+                    'Não foi possível carregar os jogos.',
+                )
             } finally {
                 setCarregando(false)
             }
@@ -76,7 +96,9 @@ function HomePage() {
     if (carregando) {
         return (
             <main className="home">
-                <p>Carregando jogos...</p>
+                <div className="home_status">
+                    <p>Carregando jogos...</p>
+                </div>
             </main>
         )
     }
@@ -84,29 +106,115 @@ function HomePage() {
     if (erro) {
         return (
             <main className="home">
-                <p>{erro}</p>
+                <div className="home_status">
+                    <p role="alert">{erro}</p>
+                </div>
             </main>
         )
     }
+
+    const destaque = populares[0]
+
+    const popularesDaSecao =
+        populares.slice(1)
+
     return (
         <main className="home">
-            <h1>GameVault</h1>
-            <p>Sua biblioteca de jogos.</p>
+            {destaque && (
+                <section
+                    className="home_hero"
+                    style={
+                        destaque.imagemUrl
+                            ? {
+                                backgroundImage:
+                                    `url("${destaque.imagemUrl}")`,
+                            }
+                            : undefined
+                    }
+                >
+                    {destaque.imagemUrl && (
+                        <img
+                            className="home_hero-image"
+                            src={destaque.imagemUrl}
+                            alt=""
+                            aria-hidden="true"
+                        />
+                    )}
+                    <div className="home_hero-overlay"/>
 
-            <GameSection
-                titulo="Populares"
-                jogos={populares}
-            />
+                    <div className="home_hero-content">
+                        <span className="home_hero-label">
+                            Em destaque
+                        </span>
 
-            <GameSection
-                titulo="Lancamentos recentes"
-                jogos={lancamentos}
-            />
+                        <h1 className="home_hero-title">
+                            {destaque.nome}
+                        </h1>
 
-            <GameSection
-                titulo="Melhores avaliados"
-                jogos={maisBemAvaliados}
-            />
+                        <p className="home_hero-description">
+                            Descubra detalhes, avaliações e
+                            informações sobre um dos jogos em
+                            destaque no GameVault.
+                        </p>
+
+                        <div className="home_hero-metadata">
+                            {destaque.anoLancamento !==
+                                undefined && (
+                                    <span>
+                                    {destaque.anoLancamento}
+                                </span>
+                                )}
+
+                            {destaque.avaliacao !==
+                                undefined && (
+                                    <span>
+                                    RAWG{' '}
+                                        {destaque.avaliacao.toLocaleString(
+                                            'pt-BR',
+                                            {
+                                                minimumFractionDigits: 1,
+                                                maximumFractionDigits: 1,
+                                            },
+                                        )}
+                                </span>
+                                )}
+                        </div>
+
+                        <div className="home_hero-actions">
+                            <Link
+                                className="home_hero-primary"
+                                to={`/jogos/${destaque.id}`}
+                            >
+                                Ver detalhes
+                            </Link>
+
+                            <Link
+                                className="home_hero-secondary"
+                                to="/catalogo"
+                            >
+                                Explorar catálogo
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            <div className="home_sections">
+                <GameSection
+                    titulo="Populares"
+                    jogos={popularesDaSecao}
+                />
+
+                <GameSection
+                    titulo="Lançamentos recentes"
+                    jogos={lancamentos}
+                />
+
+                <GameSection
+                    titulo="Mais bem avaliados"
+                    jogos={maisBemAvaliados}
+                />
+            </div>
         </main>
     )
 }
