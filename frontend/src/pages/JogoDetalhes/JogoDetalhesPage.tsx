@@ -266,314 +266,245 @@ function JogoDetalhesPage() {
 
     if (carregando) {
         return (
-            <main className="jogo-detalhes">
-                <p>Carregando jogo...</p>
-            </main>
-        )
-    }
-
-    if (erro) {
-        return (
-            <main className="jogo-detalhes">
-                <p>{erro}</p>
-            </main>
-        )
-    }
-
-    if (!jogo) {
-        return null
-    }
-
-    const usuarioAutenticado =
-        jogo.favoritado !== null &&
-        jogo.naListaDesejos !== null
-
-    return (
         <main className="jogo-detalhes">
-            {jogo.imagemFundo && (
-                <img
-                    className="jogo-detalhes__imagem"
-                    src={jogo.imagemFundo}
-                    alt={`Imagem de ${jogo.nome}`}
-                />
-            )}
+            <section className="jogo-detalhes__hero">
+                <div className="jogo-detalhes__conteudo">
+                    <span className="jogo-detalhes__label">DETALHES DO JOGO</span>
+                    <h1>{jogo.nome}</h1>
 
-            <h1>{jogo.nome}</h1>
+                    <div className="jogo-detalhes__meta">
+                        {jogo.dataLancamento && <span>{jogo.dataLancamento.slice(0, 4)}</span>}
+                        {jogo.generos.slice(0, 3).map((genero) => <span key={genero}>{genero}</span>)}
+                        {jogo.desenvolvedoras[0] && <span>{jogo.desenvolvedoras[0]}</span>}
+                    </div>
 
-            {jogo.dataLancamento && (
-                <p>
-                    <strong>Lançamento:</strong>{' '}
-                    {jogo.dataLancamento}
-                </p>
-            )}
+                    <div className="jogo-detalhes__avaliacoes">
+                        {jogo.notaRawg !== null && (
+                            <div className="jogo-detalhes__rating">
+                                <strong>{jogo.notaRawg}</strong>
+                                <span>RAWG</span>
+                            </div>
+                        )}
+                        {jogo.metacritic !== null && (
+                            <div className="jogo-detalhes__metacritic">
+                                <strong>{jogo.metacritic}</strong>
+                                <span>Metacritic</span>
+                            </div>
+                        )}
+                        {jogo.mediaAvaliacoesGameVault !== null && (
+                            <div className="jogo-detalhes__gv-rating">
+                                <strong>{jogo.mediaAvaliacoesGameVault}</strong>
+                                <span>
+                                    GameVault
+                                    {jogo.quantidadeAvaliacoesGameVault > 0
+                                        ? ' · ' + jogo.quantidadeAvaliacoesGameVault
+                                        : ''}
+                                </span>
+                            </div>
+                        )}
+                    </div>
 
-            {jogo.notaRawg !== null && (
-                <p>
-                    <strong>
-                        Avaliação RAWG:
-                    </strong>{' '}
-                    {jogo.notaRawg}
-                </p>
-            )}
+                    <div className="jogo-detalhes__acoes">
+                        {usuarioAutenticado ? (
+                            <>
+                                <button
+                                    type="button"
+                                    className="jogo-detalhes__acao jogo-detalhes__acao--primary"
+                                    onClick={alternarFavorito}
+                                    disabled={processandoFavorito}
+                                >
+                                    <span aria-hidden="true">♥</span>
+                                    {processandoFavorito
+                                        ? 'Atualizando...'
+                                        : jogo.favoritado
+                                            ? 'Remover favorito'
+                                            : 'Favoritar'}
+                                </button>
 
-            {jogo.metacritic !== null && (
-                <p>
-                    <strong>Metacritic:</strong>{' '}
-                    {jogo.metacritic}
-                </p>
-            )}
-
-            {jogo.tempoMedioJogo !== null && (
-                <p>
-                    <strong>Tempo médio:</strong>{' '}
-                    {jogo.tempoMedioJogo} horas
-                </p>
-            )}
-
-            {jogo.classificacaoEtaria && (
-                <p>
-                    <strong>
-                        Classificação etária:
-                    </strong>{' '}
-                    {jogo.classificacaoEtaria}
-                </p>
-            )}
-
-            <section>
-                <h2>GameVault</h2>
-
-                {jogo.quantidadeAvaliacoesGameVault >
-                0 ? (
-                    <>
-                        <p>
-                            <strong>
-                                Avaliação dos usuários:
-                            </strong>{' '}
-                            {
-                                jogo.mediaAvaliacoesGameVault
-                            }
-                        </p>
-
-                        <p>
-                            <strong>
-                                Quantidade de avaliações:
-                            </strong>{' '}
-                            {
-                                jogo.quantidadeAvaliacoesGameVault
-                            }
-                        </p>
-                    </>
-                ) : (
-                    <p>
-                        Este jogo ainda não possui
-                        avaliações no GameVault.
-                    </p>
-                )}
-
-                {usuarioAutenticado ? (
-                    <>
-                        <p>
-                            <strong>
-                                Minha avaliação:
-                            </strong>{' '}
-                            {jogo.minhaAvaliacao !==
-                            null
-                                ? jogo.minhaAvaliacao
-                                : 'Ainda não avaliado'}
-                        </p>
-
-                        <div className="jogo-detalhes__acoes">
-                            <button
-                                type="button"
-                                onClick={
-                                    alternarFavorito
-                                }
-                                disabled={
-                                    processandoFavorito
-                                }
+                                <button
+                                    type="button"
+                                    className="jogo-detalhes__acao"
+                                    onClick={alternarListaDesejos}
+                                    disabled={processandoListaDesejos}
+                                >
+                                    <span aria-hidden="true">☷</span>
+                                    {processandoListaDesejos
+                                        ? 'Atualizando...'
+                                        : jogo.naListaDesejos
+                                            ? 'Remover da lista'
+                                            : 'Lista de desejos'}
+                                </button>
+                            </>
+                        ) : (
+                            <Link
+                                className="jogo-detalhes__acao jogo-detalhes__acao--primary"
+                                to="/login"
                             >
-                                {processandoFavorito
-                                    ? 'Atualizando...'
-                                    : jogo.favoritado
-                                        ? 'Remover dos favoritos'
-                                        : 'Adicionar aos favoritos'}
-                            </button>
+                                Entrar para interagir
+                            </Link>
+                        )}
+                    </div>
 
-                            <button
-                                type="button"
-                                onClick={
-                                    alternarListaDesejos
-                                }
-                                disabled={
-                                    processandoListaDesejos
-                                }
-                            >
-                                {processandoListaDesejos
-                                    ? 'Atualizando...'
-                                    : jogo.naListaDesejos
-                                        ? 'Remover da lista de desejos'
-                                        : 'Adicionar à lista de desejos'}
-                            </button>
+                    {(jogo.tempoMedioJogo !== null || jogo.classificacaoEtaria) && (
+                        <div className="jogo-detalhes__ficha">
+                            {jogo.tempoMedioJogo !== null && (
+                                <div>
+                                    <span>Tempo médio</span>
+                                    <strong>{jogo.tempoMedioJogo}h</strong>
+                                </div>
+                            )}
+                            {jogo.classificacaoEtaria && (
+                                <div>
+                                    <span>Classificação</span>
+                                    <strong>{jogo.classificacaoEtaria}</strong>
+                                </div>
+                            )}
                         </div>
+                    )}
+                </div>
 
-                        <div className="jogo-detalhes__avaliacao">
-                            <label htmlFor="nota">
-                                Minha avaliação
-                            </label>
-
-                            <input
-                                id="nota"
-                                type="number"
-                                min="1"
-                                max="5"
-                                step="1"
-                                value={nota}
-                                onChange={(event) =>
-                                    setNota(
-                                        event.target.value,
-                                    )
-                                }
-                                disabled={
-                                    processandoAvaliacao
-                                }
-                            />
-
-                            <button
-                                type="button"
-                                onClick={
-                                    enviarAvaliacao
-                                }
-                                disabled={
-                                    processandoAvaliacao
-                                }
-                            >
-                                {processandoAvaliacao
-                                    ? 'Salvando...'
-                                    : jogo.minhaAvaliacao !==
-                                    null
-                                        ? 'Alterar avaliação'
-                                        : 'Avaliar'}
-                            </button>
-
-                            {jogo.minhaAvaliacao !==
-                                null && (
-                                    <button
-                                        type="button"
-                                        onClick={
-                                            excluirAvaliacao
-                                        }
-                                        disabled={
-                                            processandoAvaliacao
-                                        }
-                                    >
-                                        Remover avaliação
-                                    </button>
-                                )}
-                        </div>
-                    </>
-                ) : (
-                    <p>
-                        <Link to="/login">
-                            Entre na sua conta
-                        </Link>
-                        {' '}ou{' '}
-                        <Link to="/cadastro">
-                            crie uma conta
-                        </Link>
-                        {' '} para favoritar, adicionar à lista
-                        de desejos e avaliar este jogo.
-                    </p>
-                )}
-
-                {erroAcao && (
-                    <p role="alert">
-                        {erroAcao}
-                    </p>
+                {jogo.imagemFundo && (
+                    <div className="jogo-detalhes__capa">
+                        <img src={jogo.imagemFundo} alt={'Imagem de ' + jogo.nome} />
+                    </div>
                 )}
             </section>
 
-            {jogo.generos.length > 0 && (
-                <section>
-                    <h2>Gêneros</h2>
+            <nav className="jogo-detalhes__abas" aria-label="Seções dos detalhes do jogo">
+                <a href="#sobre">Sobre</a>
+                {jogo.screenshots.length > 0 && <a href="#screenshots">Screenshots</a>}
+                {jogo.plataformas.length > 0 && <a href="#plataformas">Plataformas</a>}
+                {jogo.plataformas.some((plataforma) => plataforma.requisitoMinimo || plataforma.requisitoRecomendade) && (
+                    <a href="#requisitos">Requisitos</a>
+                )}
+            </nav>
 
-                    <p>
-                        {jogo.generos.join(', ')}
-                    </p>
+            <section id="sobre" className="jogo-detalhes__bloco">
+                <div className="jogo-detalhes__bloco-cabecalho">
+                    <span>Sobre</span>
+                </div>
+
+                {jogo.descricao ? (
+                    <p className="jogo-detalhes__descricao">{jogo.descricao}</p>
+                ) : (
+                    <p className="jogo-detalhes__vazio">Descrição não disponível.</p>
+                )}
+
+                {jogo.generos.length > 0 && (
+                    <div className="jogo-detalhes__tags">
+                        {jogo.generos.map((genero) => <span key={genero}>{genero}</span>)}
+                    </div>
+                )}
+
+                <div className="jogo-detalhes__creditos">
+                    {jogo.desenvolvedoras.length > 0 && (
+                        <div>
+                            <span>Desenvolvedora</span>
+                            <strong>{jogo.desenvolvedoras.join(', ')}</strong>
+                        </div>
+                    )}
+                    {jogo.publicadoras.length > 0 && (
+                        <div>
+                            <span>Publicadora</span>
+                            <strong>{jogo.publicadoras.join(', ')}</strong>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {jogo.screenshots.length > 0 && (
+                <section id="screenshots" className="jogo-detalhes__bloco">
+                    <div className="jogo-detalhes__bloco-cabecalho">
+                        <span>Screenshots</span>
+                        <small>{jogo.screenshots.length} imagens</small>
+                    </div>
+                    <div className="jogo-detalhes__screenshots">
+                        {jogo.screenshots.map((screenshot) => (
+                            <img key={screenshot} src={screenshot} alt={'Screenshot de ' + jogo.nome} />
+                        ))}
+                    </div>
                 </section>
             )}
 
             {jogo.plataformas.length > 0 && (
-                <section>
-                    <h2>Plataformas</h2>
+                <section id="plataformas" className="jogo-detalhes__bloco">
+                    <div className="jogo-detalhes__bloco-cabecalho">
+                        <span>Plataformas</span>
+                    </div>
+                    <div className="jogo-detalhes__plataformas">
+                        {jogo.plataformas.map((plataforma) => (
+                            <div key={plataforma.id} className="jogo-detalhes__plataforma">
+                                <strong>{plataforma.nome}</strong>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
-                    <ul>
-                        {jogo.plataformas.map(
-                            (plataforma) => (
-                                <li
-                                    key={plataforma.id}
-                                >
-                                    {plataforma.nome}
-                                </li>
+            {jogo.plataformas.some((plataforma) => plataforma.requisitoMinimo || plataforma.requisitoRecomendade) && (
+                <section id="requisitos" className="jogo-detalhes__bloco">
+                    <div className="jogo-detalhes__bloco-cabecalho">
+                        <span>Requisitos</span>
+                    </div>
+                    <div className="jogo-detalhes__requisitos">
+                        {jogo.plataformas.map((plataforma) =>
+                            (plataforma.requisitoMinimo || plataforma.requisitoRecomendade) && (
+                                <div key={plataforma.id}>
+                                    <strong>{plataforma.nome}</strong>
+                                    {plataforma.requisitoMinimo && (
+                                        <p><span>Mínimo</span>{plataforma.requisitoMinimo}</p>
+                                    )}
+                                    {plataforma.requisitoRecomendade && (
+                                        <p><span>Recomendado</span>{plataforma.requisitoRecomendade}</p>
+                                    )}
+                                </div>
                             ),
                         )}
-                    </ul>
+                    </div>
                 </section>
             )}
 
-            {jogo.desenvolvedoras.length >
-                0 && (
-                    <section>
-                        <h2>Desenvolvedoras</h2>
+            {usuarioAutenticado && (
+                <section className="jogo-detalhes__bloco jogo-detalhes__avaliacao-box">
+                    <div className="jogo-detalhes__bloco-cabecalho">
+                        <span>Minha avaliação</span>
+                        {jogo.minhaAvaliacao !== null && <small>Atual: {jogo.minhaAvaliacao}/5</small>}
+                    </div>
 
-                        <p>
-                            {jogo.desenvolvedoras.join(
-                                ', ',
-                            )}
-                        </p>
-                    </section>
-                )}
-
-            {jogo.publicadoras.length >
-                0 && (
-                    <section>
-                        <h2>Publicadoras</h2>
-
-                        <p>
-                            {jogo.publicadoras.join(
-                                ', ',
-                            )}
-                        </p>
-                    </section>
-                )}
-
-            {jogo.descricao && (
-                <section>
-                    <h2>Descrição</h2>
-
-                    <p>{jogo.descricao}</p>
+                    <div className="jogo-detalhes__avaliacao">
+                        <label htmlFor="nota">Dê uma nota de 1 a 5</label>
+                        <input
+                            id="nota"
+                            type="number"
+                            min="1"
+                            max="5"
+                            step="1"
+                            value={nota}
+                            onChange={(event) => setNota(event.target.value)}
+                            disabled={processandoAvaliacao}
+                        />
+                        <button type="button" onClick={enviarAvaliacao} disabled={processandoAvaliacao}>
+                            {processandoAvaliacao
+                                ? 'Salvando...'
+                                : jogo.minhaAvaliacao !== null
+                                    ? 'Alterar avaliação'
+                                    : 'Avaliar'}
+                        </button>
+                        {jogo.minhaAvaliacao !== null && (
+                            <button type="button" onClick={excluirAvaliacao} disabled={processandoAvaliacao}>
+                                Remover avaliação
+                            </button>
+                        )}
+                    </div>
                 </section>
             )}
 
-            {jogo.screenshots.length >
-                0 && (
-                    <section>
-                        <h2>Screenshots</h2>
-
-                        <div className="jogo-detalhes__screenshots">
-                            {jogo.screenshots.map(
-                                (screenshot) => (
-                                    <img
-                                        key={screenshot}
-                                        src={screenshot}
-                                        alt={`Screenshot de ${jogo.nome}`}
-                                    />
-                                ),
-                            )}
-                        </div>
-                    </section>
-                )}
+            {erroAcao && (
+                <p className="jogo-detalhes__erro" role="alert">{erroAcao}</p>
+            )}
         </main>
     )
+
 }
 
 export default JogoDetalhesPage
