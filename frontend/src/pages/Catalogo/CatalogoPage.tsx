@@ -212,8 +212,6 @@ function CatalogoPage() {
                 <p>Nenhum jogo encontrado.</p>
             ) : (
                 <>
-                    <p>{totalResultados} resultados encontrados</p>
-
                     <GameSection titulo="Jogos" jogos={jogos}/>
 
                     <div className="catalogo-paginacao">
@@ -224,10 +222,6 @@ function CatalogoPage() {
                         >
                             Anterior
                         </button>
-
-                        <span>
-                            Página {pagina} de {totalPaginas}
-                        </span>
 
                         <button
                             type="button"
