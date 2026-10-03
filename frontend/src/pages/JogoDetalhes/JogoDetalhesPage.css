@@ -67,7 +67,7 @@
 .jogo-detalhes__minha-avaliacao {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 9px;
     margin-top: 0;
 }
