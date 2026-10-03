@@ -67,8 +67,9 @@
 .jogo-detalhes__minha-avaliacao {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 9px;
-    margin-top: 20px;
+    margin-top: 0;
 }
 
 .jogo-detalhes__minha-avaliacao-label {
@@ -88,7 +89,7 @@
     color: var(--gv-text-secondary);
     background: none;
     border: 0;
-    font-size: 25px;
+    font-size: 30px;
     line-height: 1;
     cursor: pointer;
     transition:
