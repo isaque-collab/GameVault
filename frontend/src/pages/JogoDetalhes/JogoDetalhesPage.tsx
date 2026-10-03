@@ -376,6 +376,49 @@ function JogoDetalhesPage() {
                                 Entrar para interagir
                             </Link>
                         )}
+            {usuarioAutenticado && (
+                            <div className="jogo-detalhes__minha-avaliacao">
+                                <span className="jogo-detalhes__minha-avaliacao-label">
+                                    Minha avaliação
+                                </span>
+                                <div className="jogo-detalhes__estrelas" aria-label="Avalie este jogo de 1 a 5 estrelas">
+                                    {[1, 2, 3, 4, 5].map((valor) => (
+                                        <button
+                                            key={valor}
+                                            type="button"
+                                            className={
+                                                'jogo-detalhes__estrela' +
+                                                (jogo.minhaAvaliacao !== null && valor <= jogo.minhaAvaliacao
+                                                    ? ' jogo-detalhes__estrela--selecionada'
+                                                    : '')
+                                            }
+                                            data-nota={valor}
+                                            aria-label={valor + (valor === 1 ? ' estrela' : ' estrelas')}
+                                            aria-pressed={jogo.minhaAvaliacao === valor}
+                                            title={valor + (valor === 1 ? ' estrela' : ' estrelas')}
+                                            onClick={() => {
+                                                setNota(String(valor))
+                                                enviarAvaliacao(valor)
+                                            }}
+                                            disabled={processandoAvaliacao}
+                                        >
+                                            ★
+                                        </button>
+                                    ))}
+                                </div>
+                                {jogo.minhaAvaliacao !== null && (
+                                    <button
+                                        type="button"
+                                        className="jogo-detalhes__remover-avaliacao"
+                                        onClick={excluirAvaliacao}
+                                        disabled={processandoAvaliacao}
+                                    >
+                                        Remover
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                     </div>
 
                     {(jogo.tempoMedioJogo !== null || jogo.classificacaoEtaria) && (
@@ -532,48 +575,6 @@ function JogoDetalhesPage() {
                 </section>
             )}
 
-            {usuarioAutenticado && (
-                <div className="jogo-detalhes__minha-avaliacao">
-                    <span className="jogo-detalhes__minha-avaliacao-label">
-                        Minha avaliação
-                    </span>
-                    <div className="jogo-detalhes__estrelas" aria-label="Avalie este jogo de 1 a 5 estrelas">
-                        {[1, 2, 3, 4, 5].map((valor) => (
-                            <button
-                                key={valor}
-                                type="button"
-                                className={
-                                    'jogo-detalhes__estrela' +
-                                    (jogo.minhaAvaliacao !== null && valor <= jogo.minhaAvaliacao
-                                        ? ' jogo-detalhes__estrela--selecionada'
-                                        : '')
-                                }
-                                data-nota={valor}
-                                aria-label={valor + (valor === 1 ? ' estrela' : ' estrelas')}
-                                aria-pressed={jogo.minhaAvaliacao === valor}
-                                title={valor + (valor === 1 ? ' estrela' : ' estrelas')}
-                                onClick={() => {
-                                    setNota(String(valor))
-                                    enviarAvaliacao(valor)
-                                }}
-                                disabled={processandoAvaliacao}
-                            >
-                                ★
-                            </button>
-                        ))}
-                    </div>
-                    {jogo.minhaAvaliacao !== null && (
-                        <button
-                            type="button"
-                            className="jogo-detalhes__remover-avaliacao"
-                            onClick={excluirAvaliacao}
-                            disabled={processandoAvaliacao}
-                        >
-                            Remover
-                        </button>
-                    )}
-                </div>
-            )}
 
             {erroAcao && (
                 <p className="jogo-detalhes__erro" role="alert">{erroAcao}</p>
