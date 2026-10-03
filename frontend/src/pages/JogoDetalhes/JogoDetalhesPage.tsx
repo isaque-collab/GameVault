@@ -378,9 +378,6 @@ function JogoDetalhesPage() {
                         )}
             {usuarioAutenticado && (
                             <div className="jogo-detalhes__minha-avaliacao">
-                                <span className="jogo-detalhes__minha-avaliacao-label">
-                                    Minha avaliação
-                                </span>
                                 <div className="jogo-detalhes__estrelas" aria-label="Avalie este jogo de 1 a 5 estrelas">
                                     {[1, 2, 3, 4, 5].map((valor) => (
                                         <button
