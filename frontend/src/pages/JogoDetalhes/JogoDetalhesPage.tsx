@@ -196,21 +196,20 @@ function JogoDetalhesPage() {
         }
     }
 
-    async function enviarAvaliacao() {
+    async function enviarAvaliacao(notaSelecionada = Number(nota)) {
         if (!jogo) {
             return
         }
 
-        const notaNumerica = Number(nota)
+        const notaNumerica = notaSelecionada
 
         if (
-            nota.trim() === '' ||
             Number.isNaN(notaNumerica) ||
             notaNumerica < 1 ||
             notaNumerica > 5
         ) {
             setErroAcao(
-                'Informe uma nota entre 1 e 5.',
+                'Selecione uma nota entre 1 e 5 estrelas.',
             )
             return
         }
@@ -534,48 +533,46 @@ function JogoDetalhesPage() {
             )}
 
             {usuarioAutenticado && (
-                <section className="jogo-detalhes__bloco jogo-detalhes__avaliacao-box">
-                    <div className="jogo-detalhes__bloco-cabecalho">
-                        <span>Minha avaliação</span>
-                        {jogo.minhaAvaliacao !== null && (
-                            <small>Atual: {jogo.minhaAvaliacao}/5</small>
-                        )}
-                    </div>
-
-                    <div className="jogo-detalhes__avaliacao">
-                        <label htmlFor="nota">Dê uma nota de 1 a 5</label>
-                        <input
-                            id="nota"
-                            type="number"
-                            min="1"
-                            max="5"
-                            step="1"
-                            value={nota}
-                            onChange={(event) => setNota(event.target.value)}
-                            disabled={processandoAvaliacao}
-                        />
-                        <button
-                            type="button"
-                            onClick={enviarAvaliacao}
-                            disabled={processandoAvaliacao}
-                        >
-                            {processandoAvaliacao
-                                ? 'Salvando...'
-                                : jogo.minhaAvaliacao !== null
-                                    ? 'Alterar avaliação'
-                                    : 'Avaliar'}
-                        </button>
-                        {jogo.minhaAvaliacao !== null && (
+                <div className="jogo-detalhes__minha-avaliacao">
+                    <span className="jogo-detalhes__minha-avaliacao-label">
+                        Minha avaliação
+                    </span>
+                    <div className="jogo-detalhes__estrelas" aria-label="Avalie este jogo de 1 a 5 estrelas">
+                        {[1, 2, 3, 4, 5].map((valor) => (
                             <button
+                                key={valor}
                                 type="button"
-                                onClick={excluirAvaliacao}
+                                className={
+                                    'jogo-detalhes__estrela' +
+                                    (jogo.minhaAvaliacao !== null && valor <= jogo.minhaAvaliacao
+                                        ? ' jogo-detalhes__estrela--selecionada'
+                                        : '')
+                                }
+                                data-nota={valor}
+                                aria-label={valor + (valor === 1 ? ' estrela' : ' estrelas')}
+                                aria-pressed={jogo.minhaAvaliacao === valor}
+                                title={valor + (valor === 1 ? ' estrela' : ' estrelas')}
+                                onClick={() => {
+                                    setNota(String(valor))
+                                    enviarAvaliacao(valor)
+                                }}
                                 disabled={processandoAvaliacao}
                             >
-                                Remover avaliação
+                                ★
                             </button>
-                        )}
+                        ))}
                     </div>
-                </section>
+                    {jogo.minhaAvaliacao !== null && (
+                        <button
+                            type="button"
+                            className="jogo-detalhes__remover-avaliacao"
+                            onClick={excluirAvaliacao}
+                            disabled={processandoAvaliacao}
+                        >
+                            Remover
+                        </button>
+                    )}
+                </div>
             )}
 
             {erroAcao && (
