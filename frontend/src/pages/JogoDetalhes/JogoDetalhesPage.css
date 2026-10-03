@@ -64,6 +64,91 @@
 .jogo-detalhes__meta,
 .jogo-detalhes__avaliacoes,
 .jogo-detalhes__acoes,
+.jogo-detalhes__minha-avaliacao {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 20px;
+}
+
+.jogo-detalhes__minha-avaliacao-label {
+    color: var(--gv-text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.jogo-detalhes__estrelas {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.jogo-detalhes__estrela {
+    padding: 0 2px;
+    color: var(--gv-text-secondary);
+    background: none;
+    border: 0;
+    font-size: 25px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        color 150ms ease,
+        transform 150ms ease,
+        filter 150ms ease;
+}
+
+.jogo-detalhes__estrela:hover:not(:disabled),
+.jogo-detalhes__estrela:focus-visible {
+    transform: translateY(-2px) scale(1.08);
+    outline: none;
+}
+
+.jogo-detalhes__estrela[data-nota="1"]:hover,
+.jogo-detalhes__estrela[data-nota="1"].jogo-detalhes__estrela--selecionada {
+    color: #ef4444;
+}
+
+.jogo-detalhes__estrela[data-nota="2"]:hover,
+.jogo-detalhes__estrela[data-nota="2"].jogo-detalhes__estrela--selecionada {
+    color: #f97316;
+}
+
+.jogo-detalhes__estrela[data-nota="3"]:hover,
+.jogo-detalhes__estrela[data-nota="3"].jogo-detalhes__estrela--selecionada {
+    color: #facc15;
+}
+
+.jogo-detalhes__estrela[data-nota="4"]:hover,
+.jogo-detalhes__estrela[data-nota="4"].jogo-detalhes__estrela--selecionada {
+    color: #84cc16;
+}
+
+.jogo-detalhes__estrela[data-nota="5"]:hover,
+.jogo-detalhes__estrela[data-nota="5"].jogo-detalhes__estrela--selecionada {
+    color: #22c55e;
+}
+
+.jogo-detalhes__estrela:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+.jogo-detalhes__remover-avaliacao {
+    padding: 3px 7px;
+    color: var(--gv-text-secondary);
+    background: transparent;
+    border: 1px solid var(--gv-border);
+    border-radius: 5px;
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.jogo-detalhes__remover-avaliacao:hover:not(:disabled) {
+    color: var(--gv-text-primary);
+    border-color: var(--gv-primary);
+}
+
 .jogo-detalhes__ficha {
     display: flex;
     flex-wrap: wrap;
