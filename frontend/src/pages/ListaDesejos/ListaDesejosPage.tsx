@@ -1,3 +1,4 @@
+import {Link} from 'react-router'
 import { useEffect, useState } from 'react'
 import { listarListaDesejos } from '../../api/colecoesApi'
 import GameSection, {
@@ -62,7 +63,12 @@ function ListaDesejosPage() {
 
     return (
         <main className="colecao-page">
-            <h1>Lista de desejos</h1>
+            <div className="colecao-cabecalho">
+                <h1>Lista de Desejos</h1>
+                {jogos.length > 0 && (
+                    <span className="colecao-contagem">{jogos.length}</span>
+                )}
+            </div>
 
             {jogos.length > 0 ? (
                 <GameSection
@@ -70,9 +76,14 @@ function ListaDesejosPage() {
                     jogos={jogos}
                 />
             ) : (
-                <p>
-                    Sua lista de desejos está vazia.
-                </p>
+                <div className="colecao-vazio">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 4h14v17l-7-4-7 4V4Z"/>
+                    </svg>
+                    <p>Você ainda não adicionou jogos aos desejos.</p>
+                    <Link to="/catalogo">Explorar catálogo</Link>
+                </div>
             )}
         </main>
     )

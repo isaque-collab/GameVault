@@ -1,3 +1,4 @@
+import {Link} from 'react-router'
 import {useEffect, useState} from 'react'
 import {listarFavoritos} from '../../api/colecoesApi.ts'
 import GameSection, {
@@ -62,7 +63,12 @@ function FavoritosPage() {
 
     return (
         <main className="colecao-page">
-            <h1>Favoritos</h1>
+            <div className="colecao-cabecalho">
+                <h1>Favoritos</h1>
+                {favoritos.length > 0 && (
+                    <span className="colecao-contagem">{favoritos.length}</span>
+                )}
+            </div>
 
             {favoritos.length > 0 ? (
                 <GameSection
@@ -70,9 +76,14 @@ function FavoritosPage() {
                     jogos={favoritos}
                 />
             ) : (
-                <p>
-                    Você ainda não adicionou jogos aos favoritos.
-                </p>
+                <div className="colecao-vazio">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 20.5S4 16 4 9.5A4.5 4.5 0 0 1 12 6.7a4.5 4.5 0 0 1 8 2.8c0 6.5-8 11-8 11Z"/>
+                    </svg>
+                    <p>Você ainda não adicionou jogos aos favoritos.</p>
+                    <Link to="/catalogo">Explorar catálogo</Link>
+                </div>
             )}
         </main>
     )
