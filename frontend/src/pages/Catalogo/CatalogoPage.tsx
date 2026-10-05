@@ -59,6 +59,9 @@ function CatalogoPage() {
     )
     const pagina = obterPagina(searchParams.get('pagina'))
 
+    const exibirFiltros =
+        !nomeAplicado || Boolean(generoAplicado) || Boolean(ordenacaoAplicada)
+
     const [jogos, setJogos] = useState<GameSectionItem[]>([])
     const [totalResultados, setTotalResultados] = useState(0)
     const [carregando, setCarregando] = useState(true)
@@ -146,8 +149,11 @@ function CatalogoPage() {
 
     return (
         <main className="catalogo-page">
-            <h1>Catálogo</h1>
+            <h1>
+                {nomeAplicado ? `Resultados para "${nomeAplicado}"` : 'Catálogo de jogos'}
+            </h1>
 
+            {exibirFiltros && (
             <form
                 key={searchParams.toString()}
                 className="catalogo-filtros"
@@ -203,6 +209,7 @@ function CatalogoPage() {
                     </button>
                 </div>
             </form>
+            )}
 
             {carregando ? (
                 <p>Carregando catálogo...</p>
