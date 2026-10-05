@@ -1,0 +1,27 @@
+.footer {
+    margin-top: auto;
+    padding: 24px 16px;
+    border-top: 1px solid var(--gv-border);
+    background-color: var(--gv-header);
+    color: var(--gv-text-secondary);
+    font-size: 13px;
+    text-align: center;
+}
+
+.footer a {
+    color: var(--gv-primary);
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.footer a:hover {
+    color: var(--gv-primary-hover);
+    text-decoration: underline;
+}
+
+/* Evita que a navegação móvel fixa cubra o rodapé */
+@media (max-width: 700px) {
+    .footer {
+        padding-bottom: 96px;
+    }
+}

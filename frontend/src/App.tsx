@@ -10,6 +10,7 @@ import CadastroPage from './pages/Cadastro/CadastroPage.tsx';
 import PerfilPage from './pages/PerfilPage.tsx'
 import RotaProtegida from './auth/RotaProtegida.tsx'
 import CatalogoPage from './pages/Catalogo/CatalogoPage.tsx'
+import Footer from './components/layout/Footer/Footer.tsx'
 
 function App() {
     return (
@@ -59,6 +60,7 @@ function App() {
                 />
                 <Route path="*" element={<NotFoundPage/>}/>
             </Routes>
+            <Footer/>
         </>
     )
 }
