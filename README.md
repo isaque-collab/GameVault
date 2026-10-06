@@ -4,13 +4,17 @@ O **GameVault** é uma aplicação web para descoberta, organização e avaliaç
 
 O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de jogos e mantém no banco de dados apenas os dados próprios da aplicação, como usuários, favoritos, lista de desejos e avaliações.
 
-> **Status:** em desenvolvimento
+> **Status:** V1 concluída.
 >
 > **Back-end da V1:** concluído e validado.
 >
-> **Etapa atual:** fechamento documental concluído; projeto preparado para início do front-end.
+> **Front-end da V1:** concluído e validado.
 >
-> **Próximo foco:** implementação da interface web consumindo os contratos já consolidados do back-end.
+> **Integração front-end/back-end:** concluída e validada.
+>
+> **Identidade visual e responsividade da V1:** aplicadas.
+>
+> **Documentação oficial:** `GameVault_Documentacao_Projeto_V1.3_Frontend_Concluido.docx`.
 
 ---
 
@@ -56,7 +60,7 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 * Docker Compose.
 * DBeaver.
 
-## Testes
+## Testes (back-end)
 
 * JUnit 5.
 * Mockito.
@@ -64,6 +68,14 @@ O projeto utiliza a API pública da **RAWG** como fonte externa do catálogo de 
 * Spring Boot Test.
 * Spring Security Test.
 * MockRestServiceServer.
+
+## Front-end
+
+* React 19.
+* TypeScript.
+* Vite 8.
+* React Router 8.
+* CSS por componente, com tokens globais da identidade GameVault.
 
 ---
 
@@ -577,41 +589,113 @@ Nunca versione credenciais reais nem o arquivo `.env`.
 
 ---
 
+# Front-end
+
+O front-end é uma SPA no diretório `frontend/`. Em desenvolvimento, o Vite encaminha `/api` para `http://localhost:8080`, permitindo cookies de sessão sem CORS no browser local.
+
+```text
+frontend/src
+├── api          # cliente HTTP e recursos da API
+├── auth         # sessão, contexto e rotas protegidas
+├── components
+│   ├── layout   # Header e Footer
+│   └── game     # GameCard e GameSection
+├── mappers
+├── pages
+└── types
+```
+
+## Rotas
+
+| Rota | Página | Acesso |
+| ---- | ------ | ------ |
+| `/` | Home | Público |
+| `/catalogo` | Catálogo | Público |
+| `/jogos/:rawgGameId` | Detalhes | Público |
+| `/login` | Login | Público |
+| `/cadastro` | Cadastro | Público |
+| `/favoritos` | Favoritos | Autenticado |
+| `/lista-desejos` | Lista de desejos | Autenticado |
+| `/perfil` | Perfil | Autenticado |
+| `*` | 404 | Público |
+
+Visitante em rota protegida é enviado para `/login`, com retorno ao destino original após o login.
+
+## Autenticação no cliente
+
+* `AuthProvider` consulta `GET /api/usuarios/me` ao iniciar.
+* Login: CSRF + `POST /api/auth/login` (formulário `email`/`senha`) + recarga do perfil.
+* Logout: CSRF + `POST /api/auth/logout`.
+* Operações que alteram estado enviam `X-XSRF-TOKEN` a partir do cookie `XSRF-TOKEN`.
+* Todas as chamadas usam `credentials: include`.
+
+## Telas
+
+* **Home:** hero com o primeiro jogo popular; seções de populares, lançamentos recentes e mais bem avaliados.
+* **Catálogo:** busca por nome, filtro por gênero, ordenação e paginação via query string. Cards abrem os detalhes.
+* **Detalhes:** metadados RAWG, média GameVault, abas (Sobre, Screenshots, Plataformas, Requisitos). Ações pessoais (Favorito, Wishlist, avaliação 1–5) ficam nesta tela.
+* **Perfil:** edição de dados, foto (JPEG/PNG/WebP, 2 MB), senha e exclusão da conta.
+* **Favoritos e Wishlist:** listagens enriquecidas; item sem metadados da RAWG aparece como `Jogo #{id}`.
+
+A busca global fica no Header, com debounce de 500 ms, e navega para `/catalogo?nome=...`.
+
+A UI do catálogo da V1 expõe nome, gênero, ordenação e página. Plataforma, desenvolvedora, publicadora e período continuam disponíveis no contrato do back-end, sem controles dedicados nesta interface.
+
+## Identidade visual
+
+Tema escuro com tokens em `frontend/src/index.css`:
+
+```text
+--gv-background: #0b1017
+--gv-header: #111820
+--gv-surface: #151e29
+--gv-primary: #4aa8e8
+--gv-text-primary: #f3f6f9
+--gv-text-secondary: #9aa8b7
+```
+
+Até 768 px, a navegação autenticada usa barra inferior (Início, Explorar, Favoritos, Desejos, Perfil). O rodapé atribui dados e imagens à RAWG.
+
+## Executando o front-end
+
+Com o banco e o back-end no ar:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Acesse `http://localhost:5173`.
+
+---
+
 # Estado atual do desenvolvimento
 
 ## Back-end da V1
 
 **Concluído e validado.**
 
+## Front-end da V1
+
+**Concluído e validado.**
+
 Inclui:
 
-* infraestrutura e persistência;
-* autenticação e segurança;
-* usuário e perfil;
-* foto de perfil;
-* Favoritos;
-* Wishlist;
-* avaliações;
-* catálogo;
-* Home;
-* detalhes;
-* integração RAWG;
-* tratamento de erros;
-* CORS e CSRF;
-* coleções pessoais enriquecidas;
-* testes automatizados em múltiplos níveis.
+* Home, catálogo e detalhes;
+* cadastro, login, logout e rotas protegidas;
+* perfil, foto, senha e exclusão de conta;
+* Favoritos, Wishlist e avaliações;
+* sessão HTTP, CSRF e proxy `/api`;
+* identidade visual e layout responsivo.
+
+A linha-base funcional da V1 está encerrada.
 
 ---
 
 # Próximos passos
 
-* Iniciar a implementação do front-end.
-* Consumir os contratos consolidados do back-end.
-* Implementar Home e catálogo com cards que abrem os detalhes.
-* Implementar login, cadastro e perfil.
-* Implementar ações pessoais na página de detalhes.
-* Implementar Biblioteca de Favoritos e Wishlist.
-* Manter o README e a documentação sincronizados ao final de cada bloco.
+A V1 não possui pendências funcionais conhecidas. Evoluções (filtros extras no catálogo, recuperação de senha, testes automatizados de UI e demais itens da seção de melhorias futuras da documentação) ficam fora desta linha-base e exigem revisão explícita.
 
 ---
 
