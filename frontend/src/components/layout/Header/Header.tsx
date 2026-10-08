@@ -119,8 +119,8 @@ function Header() {
                         <NavLink
                             className={({isActive}) =>
                                 isActive
-                                    ? 'header_link header_link--active'
-                                    : 'header_link'
+                                    ? 'header_link header_link--home header_link--active'
+                                    : 'header_link header_link--home'
                             }
                             to="/"
                         >
